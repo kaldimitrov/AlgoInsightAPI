@@ -25,13 +25,13 @@ export class LoginUserDto {
 export class UpdateUserDto {
   @IsString()
   @IsOptional()
-  firstName: string;
+  firstName?: string;
 
   @IsString()
   @IsOptional()
-  lastName: string;
+  lastName?: string;
 
   @IsString()
   @IsOptional()
-  password: string;
+  password?: string;
 }

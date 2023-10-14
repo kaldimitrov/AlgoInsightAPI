@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import RandomKey from '../helpers/RandomKey';
 import { User } from 'src/user/user.entity';
 import { DecodedToken, TokenPayload } from './models/token.model';
+/* eslint-disable */
 const bcrypt = require('bcrypt');
 
 @Injectable()
