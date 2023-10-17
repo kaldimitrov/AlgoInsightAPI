@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { DockerController } from './docker.controller';
-import { NodeJsDockerService } from './services/nodejs-docker.service';
+import { DockerService } from './docker.service';
 
 @Module({
   controllers: [DockerController],
-  providers: [NodeJsDockerService],
+  providers: [DockerService],
 })
 export class DockerModule {}

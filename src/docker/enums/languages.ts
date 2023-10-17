@@ -1,4 +1,4 @@
 export enum Languages {
-  NODE = 'NodeJs',
-  Python = 'Python',
+  NODE = 'node',
+  PYTHON = 'python',
 }

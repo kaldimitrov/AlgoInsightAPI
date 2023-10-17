@@ -2,17 +2,18 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import * as Docker from 'dockerode';
 import * as tar from 'tar-stream';
+import { Container } from './models/container.model';
 
 @Injectable()
-export class NodeJsDockerService {
-  private readonly logger = new Logger(NodeJsDockerService.name);
+export class DockerService {
+  private readonly logger = new Logger(DockerService.name);
   private readonly docker = new Docker({ socketPath: '\\\\.\\pipe\\docker_engine' });
 
-  async execute(code: string) {
+  async execute(code: string, containerSettings: Container) {
     let container: Docker.Container;
     try {
       container = await this.docker.createContainer({
-        Image: 'node:latest',
+        Image: `${containerSettings.image}:${containerSettings.version}`,
         Tty: true,
         name: 'NodeJs',
         WorkingDir: '/app',
@@ -21,33 +22,35 @@ export class NodeJsDockerService {
       await container.start();
 
       const pack = tar.pack();
-      pack.entry({ name: 'index.js' }, code);
+      pack.entry({ name: containerSettings.fileName }, code);
       pack.finalize();
 
       const destPath = '/app';
-
       await container.putArchive(pack, { path: destPath });
 
       const exec = await container.exec({
-        Cmd: ['node', destPath],
+        Cmd: [containerSettings.startCmd, ...containerSettings.params, `${destPath}/${containerSettings.fileName}`],
         AttachStdout: true,
         AttachStderr: true,
       });
 
-      const execStart = exec.start({});
+      const execStart = await exec.start({});
+      let time: number;
+      const startTime = Date.now();
 
       const output = await new Promise(async (resolve, reject) => {
         const chunks = [];
-        (await execStart).on('data', (data) => {
+        execStart.on('data', (data) => {
           chunks.push(data.slice(8));
         });
-        (await execStart).on('end', () => {
+        execStart.on('end', () => {
+          time = Date.now() - startTime;
           resolve(Buffer.concat(chunks).toString('utf-8'));
         });
-        (await execStart).on('error', (err) => reject(err));
+        execStart.on('error', (err) => reject(err));
       });
 
-      return output;
+      return { time, output };
     } catch (error) {
       console.error('Error:', error);
       throw error;
