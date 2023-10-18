@@ -6,4 +6,10 @@ export enum Languages {
   RUBY = 'ruby',
   JAVA = 'java',
   RUST = 'rust',
+  HASKELL = 'haskell',
+  ELIXIR = 'elixir',
+  GOLANG = 'golang',
+  PERL = 'perl',
+  SWIFT = 'swift',
+  DART = 'dart',
 }

@@ -93,4 +93,80 @@ export const containers = {
       },
     ],
   },
+  haskell: {
+    image: 'haskell',
+    fileName: 'main.hs',
+    execution: [
+      {
+        cmd: 'ghc',
+        params: ['main.hs', '-o', 'out.exe'],
+      },
+      {
+        cmd: 'chmod',
+        params: ['777', './out.exe'],
+      },
+      {
+        cmd: './out.exe',
+        params: [],
+      },
+    ],
+  },
+  elixir: {
+    image: 'elixir',
+    fileName: 'main.exs',
+    execution: [
+      {
+        cmd: 'elixir',
+        params: ['main.exs'],
+      },
+    ],
+  },
+  golang: {
+    image: 'golang',
+    fileName: 'main.go',
+    execution: [
+      {
+        cmd: 'go',
+        params: ['run', 'main.go'],
+      },
+    ],
+  },
+  swift: {
+    image: 'swift',
+    fileName: 'main.swift',
+    execution: [
+      {
+        cmd: 'swiftc',
+        params: ['main.swift', '-o', 'out.exe'],
+      },
+      {
+        cmd: 'chmod',
+        params: ['777', './out.exe'],
+      },
+      {
+        cmd: './out.exe',
+        params: [],
+      },
+    ],
+  },
+  dart: {
+    image: 'dart',
+    fileName: 'main.dart',
+    execution: [
+      {
+        cmd: 'dart',
+        params: ['run', 'main.dart'],
+      },
+    ],
+  },
+  perl: {
+    image: 'perl',
+    fileName: 'main.pl',
+    execution: [
+      {
+        cmd: 'perl',
+        params: ['main.pl'],
+      },
+    ],
+  },
 };
