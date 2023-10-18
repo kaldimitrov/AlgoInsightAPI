@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as Docker from 'dockerode';
 import * as tar from 'tar-stream';
 import { Container } from './models/container.model';
-import { Duplex } from 'stream';
 
 @Injectable()
 export class DockerService {
@@ -12,6 +11,8 @@ export class DockerService {
 
   async execute(code: string, containerSettings: Container) {
     let container: Docker.Container;
+    const pullStream = await this.docker.pull(`${containerSettings.image}:${containerSettings.version}`);
+    await new Promise(res => this.docker.modem.followProgress(pullStream, res));
     try {
       container = await this.docker.createContainer({
         Image: `${containerSettings.image}:${containerSettings.version}`,
@@ -26,10 +27,8 @@ export class DockerService {
       pack.entry({ name: containerSettings.fileName }, code);
       pack.finalize();
 
-      const destPath = '/app';
-      await container.putArchive(pack, { path: destPath });
+      await container.putArchive(pack, { path: '/app' });
 
-      let execStart: Duplex;
       let time: number;
       let output: string;
       for (const execStep of containerSettings.execution) {
@@ -39,7 +38,7 @@ export class DockerService {
           AttachStderr: true,
         });
 
-        execStart = await exec.start({});
+        const execStart = await exec.start({});
         const startTime = Date.now();
         output = await new Promise(async (resolve, reject) => {
           const chunks = [];

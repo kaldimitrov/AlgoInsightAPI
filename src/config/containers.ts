@@ -6,6 +6,7 @@ export const containers = {
       {
         cmd: 'node',
         params: ['index.js'],
+        log: true,
       },
     ],
   },
@@ -16,6 +17,7 @@ export const containers = {
       {
         cmd: 'python3',
         params: ['main.py'],
+        log: true,
       },
     ],
   },
@@ -26,14 +28,17 @@ export const containers = {
       {
         cmd: 'gcc',
         params: ['main.c', '-o', 'out.exe'],
+        log: true,
       },
       {
         cmd: 'chmod',
         params: ['777', './out.exe'],
+        log: false,
       },
       {
         cmd: './out.exe',
         params: [],
+        log: true,
       },
     ],
   },
@@ -44,14 +49,17 @@ export const containers = {
       {
         cmd: 'g++',
         params: ['main.cpp', '-o', 'out.exe'],
+        log: true,
       },
       {
         cmd: 'chmod',
         params: ['777', './out.exe'],
+        log: false,
       },
       {
         cmd: './out.exe',
         params: [],
+        log: true,
       },
     ],
   },
@@ -62,6 +70,7 @@ export const containers = {
       {
         cmd: 'ruby',
         params: ['main.rb'],
+        log: true,
       },
     ],
   },
@@ -72,10 +81,12 @@ export const containers = {
       {
         cmd: 'javac',
         params: ['Main.java'],
+        log: true,
       },
       {
         cmd: 'java',
         params: ['Main'],
+        log: true,
       },
     ],
   },
@@ -86,10 +97,12 @@ export const containers = {
       {
         cmd: 'rustc',
         params: ['main.rs'],
+        log: true,
       },
       {
         cmd: './main',
         params: [],
+        log: true,
       },
     ],
   },
@@ -100,14 +113,17 @@ export const containers = {
       {
         cmd: 'ghc',
         params: ['main.hs', '-o', 'out.exe'],
+        log: true,
       },
       {
         cmd: 'chmod',
         params: ['777', './out.exe'],
+        log: false,
       },
       {
         cmd: './out.exe',
         params: [],
+        log: true,
       },
     ],
   },
@@ -118,6 +134,7 @@ export const containers = {
       {
         cmd: 'elixir',
         params: ['main.exs'],
+        log: true,
       },
     ],
   },
@@ -128,6 +145,7 @@ export const containers = {
       {
         cmd: 'go',
         params: ['run', 'main.go'],
+        log: true,
       },
     ],
   },
@@ -138,14 +156,17 @@ export const containers = {
       {
         cmd: 'swiftc',
         params: ['main.swift', '-o', 'out.exe'],
+        log: true,
       },
       {
         cmd: 'chmod',
         params: ['777', './out.exe'],
+        log: false,
       },
       {
         cmd: './out.exe',
         params: [],
+        log: true,
       },
     ],
   },
@@ -156,6 +177,7 @@ export const containers = {
       {
         cmd: 'dart',
         params: ['run', 'main.dart'],
+        log: true,
       },
     ],
   },
@@ -166,6 +188,7 @@ export const containers = {
       {
         cmd: 'perl',
         params: ['main.pl'],
+        log: true,
       },
     ],
   },
