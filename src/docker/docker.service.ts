@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as Docker from 'dockerode';
 import * as tar from 'tar-stream';
 import { Container } from './models/container.model';
+import { Duplex } from 'stream';
 
 @Injectable()
 export class DockerService {
@@ -28,27 +29,30 @@ export class DockerService {
       const destPath = '/app';
       await container.putArchive(pack, { path: destPath });
 
-      const exec = await container.exec({
-        Cmd: [containerSettings.startCmd, ...containerSettings.params, `${destPath}/${containerSettings.fileName}`],
-        AttachStdout: true,
-        AttachStderr: true,
-      });
-
-      const execStart = await exec.start({});
+      let execStart: Duplex;
       let time: number;
-      const startTime = Date.now();
+      let output: string;
+      for (const execStep of containerSettings.execution) {
+        const exec = await container.exec({
+          Cmd: [execStep.cmd, ...execStep.params],
+          AttachStdout: true,
+          AttachStderr: true,
+        });
 
-      const output = await new Promise(async (resolve, reject) => {
-        const chunks = [];
-        execStart.on('data', (data) => {
-          chunks.push(data.slice(8));
+        execStart = await exec.start({});
+        const startTime = Date.now();
+        output = await new Promise(async (resolve, reject) => {
+          const chunks = [];
+          execStart.on('data', (data) => {
+            chunks.push(data.slice(8));
+          });
+          execStart.on('end', () => {
+            time = Date.now() - startTime;
+            resolve(Buffer.concat(chunks).toString('utf-8'));
+          });
+          execStart.on('error', (err) => reject(err));
         });
-        execStart.on('end', () => {
-          time = Date.now() - startTime;
-          resolve(Buffer.concat(chunks).toString('utf-8'));
-        });
-        execStart.on('error', (err) => reject(err));
-      });
+      }
 
       return { time, output };
     } catch (error) {

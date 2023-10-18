@@ -13,7 +13,6 @@ export class AuthService {
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    console.log(hashedPassword);
 
     return hashedPassword;
   }
