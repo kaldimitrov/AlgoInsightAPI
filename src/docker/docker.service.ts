@@ -13,7 +13,7 @@ export class DockerService {
   async execute(code: string, containerSettings: Container) {
     let container: Docker.Container;
     const pullStream = await this.docker.pull(`${containerSettings.image}:${containerSettings.version}`);
-    await new Promise(res => this.docker.modem.followProgress(pullStream, res));
+    await new Promise((res) => this.docker.modem.followProgress(pullStream, res));
     try {
       container = await this.docker.createContainer({
         Image: `${containerSettings.image}:${containerSettings.version}`,
@@ -31,7 +31,7 @@ export class DockerService {
       await container.putArchive(pack, { path: '/app' });
 
       let time: number;
-      let output = [];
+      const output = [];
       for (const execStep of containerSettings.execution) {
         const exec = await container.exec({
           Cmd: [execStep.cmd, ...execStep.params],
@@ -78,8 +78,8 @@ export class DockerService {
 
   generateFile(code: string, fileName: string) {
     try {
-      let fileContent: string = fs.readFileSync(`${__dirname}/templates/${fileName}`, 'utf-8');
-      return fileContent.replace("{{replacement_code}}", code);
+      const fileContent: string = fs.readFileSync(`${__dirname}/templates/${fileName}`, 'utf-8');
+      return fileContent.replace('{{replacement_code}}', code);
     } catch (error) {
       throw new Error(`Error reading file: ${error.message}`);
     }
