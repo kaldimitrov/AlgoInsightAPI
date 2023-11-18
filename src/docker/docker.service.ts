@@ -46,10 +46,11 @@ export class DockerService {
 
       const statsData = [];
       statsStream.on('data', (data) => {
+        const time = Date.now();
         const processedData = this.processContainerStats(JSON.parse(data.toString('utf-8').replace(/\n/g, '')));
 
         if (processedData) {
-          statsData.push(processedData);
+          statsData.push({ time, cpu: processedData.cpu, memory: processedData.memory });
         }
       });
 
@@ -59,8 +60,16 @@ export class DockerService {
         output.push(await this.execStep(container, execStep));
       }
 
+      const maxCPU = statsData.reduce((max, currentValue) => {
+        return currentValue.cpu > max ? currentValue.cpu : max;
+      }, -Infinity);
+
+      const maxMemory = statsData.reduce((max, currentValue) => {
+        return currentValue.memory > max ? currentValue.memory : max;
+      }, -Infinity);
+
       container.wait();
-      return { time, output, statsData };
+      return { time, output, statsData, maxCPU, maxMemory };
     } catch (error) {
       this.logger.error('Error running docker', error);
       throw error;
@@ -69,11 +78,7 @@ export class DockerService {
         return;
       }
 
-      container.remove({ force: true }, (error) => {
-        if (error) {
-          this.logger.error('Error while removing container:', error);
-        }
-      });
+      container.remove({ force: true }, (error) => {});
     }
   }
 
@@ -106,18 +111,14 @@ export class DockerService {
       return null;
     }
 
-    const memoryUsage = Math.round(stats.memory_stats.usage / (1024 * 1024));
+    const memoryUsage = stats.memory_stats.usage / (1024 * 1024);
 
-    const previousCPU = stats.precpu_stats.cpu_usage.total_usage;
-    const previousSystem = stats.precpu_stats.system_cpu_usage;
-    const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - previousCPU;
+    const previousSystem = stats.precpu_stats.system_cpu_usage || 0;
+    const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
     const systemDelta = stats.cpu_stats.system_cpu_usage - previousSystem;
 
-    if (systemDelta <= 0 || cpuDelta <= 0) {
-      return null;
-    }
     const cpuPercent = (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100;
 
-    return { memoryUsage, cpuPercent };
+    return { memory: Number(memoryUsage.toFixed(2)), cpu: Number(cpuPercent.toFixed(2)) };
   }
 }
