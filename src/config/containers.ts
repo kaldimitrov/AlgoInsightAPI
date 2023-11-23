@@ -4,8 +4,13 @@ export const containers = {
     fileName: 'index.js',
     execution: [
       {
-        cmd: 'node',
-        params: ['index.js'],
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
+        cmd: './start.sh',
+        params: ['node', 'index.js'],
         log: true,
       },
     ],
@@ -15,8 +20,13 @@ export const containers = {
     fileName: 'main.py',
     execution: [
       {
-        cmd: 'python3',
-        params: ['main.py'],
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
+        cmd: './start.sh',
+        params: ['python3', 'main.py'],
         log: true,
       },
     ],
@@ -25,6 +35,11 @@ export const containers = {
     image: 'gcc',
     fileName: 'main.c',
     execution: [
+      {
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
       {
         cmd: 'gcc',
         params: ['main.c', '-o', 'out.exe'],
@@ -36,8 +51,8 @@ export const containers = {
         log: false,
       },
       {
-        cmd: './out.exe',
-        params: [],
+        cmd: './start.sh',
+        params: ['./out.exe'],
         log: true,
       },
     ],
@@ -46,6 +61,11 @@ export const containers = {
     image: 'gcc',
     fileName: 'main.cpp',
     execution: [
+      {
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
       {
         cmd: 'g++',
         params: ['main.cpp', '-o', 'out.exe'],
@@ -57,8 +77,8 @@ export const containers = {
         log: false,
       },
       {
-        cmd: './out.exe',
-        params: [],
+        cmd: './start.sh',
+        params: ['./out.exe'],
         log: true,
       },
     ],
@@ -68,8 +88,13 @@ export const containers = {
     fileName: 'main.rb',
     execution: [
       {
-        cmd: 'ruby',
-        params: ['main.rb'],
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
+        cmd: './start.sh',
+        params: ['ruby', 'main.rb'],
         log: true,
       },
     ],
@@ -79,13 +104,18 @@ export const containers = {
     fileName: 'Main.java',
     execution: [
       {
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
         cmd: 'javac',
         params: ['Main.java'],
         log: true,
       },
       {
-        cmd: 'java',
-        params: ['Main'],
+        cmd: './start.sh',
+        params: ['java', 'Main'],
         log: true,
       },
     ],
@@ -95,13 +125,18 @@ export const containers = {
     fileName: 'main.rs',
     execution: [
       {
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
         cmd: 'rustc',
         params: ['main.rs'],
         log: true,
       },
       {
-        cmd: './main',
-        params: [],
+        cmd: './start.sh',
+        params: ['./main'],
         log: true,
       },
     ],
@@ -110,6 +145,11 @@ export const containers = {
     image: 'haskell',
     fileName: 'main.hs',
     execution: [
+      {
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
       {
         cmd: 'ghc',
         params: ['main.hs', '-o', 'out.exe'],
@@ -121,8 +161,8 @@ export const containers = {
         log: false,
       },
       {
-        cmd: './out.exe',
-        params: [],
+        cmd: './start.sh',
+        params: ['./out.exe'],
         log: true,
       },
     ],
@@ -132,8 +172,13 @@ export const containers = {
     fileName: 'main.exs',
     execution: [
       {
-        cmd: 'elixir',
-        params: ['main.exs'],
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
+        cmd: './start.sh',
+        params: ['elixir', 'main.exs'],
         log: true,
       },
     ],
@@ -143,8 +188,13 @@ export const containers = {
     fileName: 'main.go',
     execution: [
       {
-        cmd: 'go',
-        params: ['run', 'main.go'],
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
+        cmd: './start.sh',
+        params: ['go', 'run', 'main.go'],
         log: true,
       },
     ],
@@ -153,6 +203,11 @@ export const containers = {
     image: 'swift',
     fileName: 'main.swift',
     execution: [
+      {
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
       {
         cmd: 'swiftc',
         params: ['main.swift', '-o', 'out.exe'],
@@ -164,8 +219,8 @@ export const containers = {
         log: false,
       },
       {
-        cmd: './out.exe',
-        params: [],
+        cmd: './start.sh',
+        params: ['./out.exe'],
         log: true,
       },
     ],
@@ -175,8 +230,13 @@ export const containers = {
     fileName: 'main.dart',
     execution: [
       {
-        cmd: 'dart',
-        params: ['run', 'main.dart'],
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
+        cmd: './start.sh',
+        params: ['dart', 'run', 'main.dart'],
         log: true,
       },
     ],
@@ -186,8 +246,13 @@ export const containers = {
     fileName: 'main.pl',
     execution: [
       {
-        cmd: 'perl',
-        params: ['main.pl'],
+        cmd: 'chmod',
+        params: ['777', './start.sh'],
+        log: false,
+      },
+      {
+        cmd: './start.sh',
+        params: ['perl', 'main.pl'],
         log: true,
       },
     ],

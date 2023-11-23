@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as Docker from 'dockerode';
 import * as tar from 'tar-stream';
 import { Container } from './models/container.model';
-import { CODE_PLACEHOLDER_NAME } from './constants';
 import { getFileContent } from 'src/helpers/FileHelper';
 import { ExecStep } from './models/execStep.model';
 import { getDockerSocketPath } from 'src/helpers/OsHelper';
@@ -32,14 +31,11 @@ export class DockerService {
 
       await container.start();
 
-      const fileContent = getFileContent(
-        `${__dirname}/templates/${containerSettings.fileName}`,
-        CODE_PLACEHOLDER_NAME,
-        code,
-      );
+      const bashScript = getFileContent(`${__dirname}/templates/start.sh`);
 
       const pack = tar.pack();
-      pack.entry({ name: containerSettings.fileName }, fileContent);
+      pack.entry({ name: containerSettings.fileName }, code);
+      pack.entry({ name: 'start.sh' }, bashScript);
       pack.finalize();
       await container.putArchive(pack, { path: '/app' });
       const statsStream = await container.stats({ stream: true });
@@ -57,7 +53,10 @@ export class DockerService {
       const output = [];
       let time: number;
       for (const execStep of containerSettings.execution) {
-        output.push(await this.execStep(container, execStep));
+        const data = await this.execStep(container, execStep);
+        if (execStep.log && data) {
+          output.push(data);
+        }
       }
 
       const maxCPU = statsData.reduce((max, currentValue) => {
@@ -78,7 +77,9 @@ export class DockerService {
         return;
       }
 
-      container.remove({ force: true }, (error) => {});
+      container.remove({ force: true }, (error) => {
+        this.logger.error('Error removing container' + error.message);
+      });
     }
   }
 
@@ -101,9 +102,7 @@ export class DockerService {
       execStart.on('error', (err) => reject(err));
     });
 
-    if (execStep.log) {
-      return stepOutput;
-    }
+    return stepOutput;
   }
 
   processContainerStats(stats: Docker.ContainerStats) {

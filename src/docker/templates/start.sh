@@ -1,0 +1,24 @@
+#!/bin/bash
+
+t_start_time=$(date +"%T.%3N")
+t_start_time_unix=$(date -d "$t_start_time" +"%s%3N" 2>/dev/null)
+"$@" &
+t2_start_time=$(date +"%T.%3N")
+t2_start_time_unix=$(date -d "$t2_start_time" +"%s%3N" 2>/dev/null)
+
+pid=$!
+
+start_time=$(ps -p "$pid" -o lstart=)
+start_time_unix=$(date -d "$start_time" +"%s%3N" 2>/dev/null)
+
+wait "$pid"
+
+end_time=$(date +"%T.%3N")
+end_time_unix=$(date -d "$end_time" +"%s%3N" 2>/dev/null)
+
+file="time.txt"
+
+echo "Before Start Time (Unix): $t_start_time_unix" >> "$file"
+echo "After Start Time (Unix): $t2_start_time_unix" >> "$file"
+echo "Pid Start Time (Unix): $start_time_unix" >> "$file"
+echo "End Time (Unix): $end_time_unix" >> "$file"
