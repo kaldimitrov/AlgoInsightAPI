@@ -51,13 +51,13 @@ export class DockerService {
       });
 
       const output = [];
-      let time: number;
       for (const execStep of containerSettings.execution) {
         const data = await this.execStep(container, execStep);
         if (execStep.log && data) {
           output.push(data);
         }
       }
+      container.wait();
 
       const maxCPU = statsData.reduce((max, currentValue) => {
         return currentValue.cpu > max ? currentValue.cpu : max;
@@ -67,8 +67,27 @@ export class DockerService {
         return currentValue.memory > max ? currentValue.memory : max;
       }, -Infinity);
 
-      container.wait();
-      return { time, output, statsData, maxCPU, maxMemory };
+      const exec = await container.exec({
+        Cmd: ['cat', 'time.txt'],
+        AttachStdout: true,
+        AttachStderr: true,
+      });
+
+      const execStart = await exec.start({});
+      const time = Number(
+        await new Promise((resolve, reject) => {
+          const chunks = [];
+          execStart.on('data', (data) => {
+            chunks.push(data.slice(8));
+          });
+          execStart.on('end', () => {
+            resolve(Buffer.concat(chunks).toString('utf-8'));
+          });
+          execStart.on('error', (err) => reject(err));
+        }),
+      );
+
+      return { time, maxCPU, maxMemory, statsData, output };
     } catch (error) {
       this.logger.error('Error running docker', error);
       throw error;
@@ -77,11 +96,11 @@ export class DockerService {
         return;
       }
 
-      // container.remove({ force: true }, (error) => {
-      //   if (error) {
-      //     this.logger.error('Error removing container' + error.message);
-      //   }
-      // });
+      container.remove({ force: true }, (error) => {
+        if (error) {
+          this.logger.error('Error removing container' + error.message);
+        }
+      });
     }
   }
 
