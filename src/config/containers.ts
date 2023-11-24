@@ -5,11 +5,11 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['node', 'index.js'],
         log: true,
       },
@@ -21,11 +21,11 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['python3', 'main.py'],
         log: true,
       },
@@ -37,7 +37,7 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
@@ -47,11 +47,11 @@ export const containers = {
       },
       {
         cmd: 'chmod',
-        params: ['777', './out.exe'],
+        params: ['+x', './out.exe'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['./out.exe'],
         log: true,
       },
@@ -63,7 +63,7 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
@@ -73,11 +73,11 @@ export const containers = {
       },
       {
         cmd: 'chmod',
-        params: ['777', './out.exe'],
+        params: ['+x', './out.exe'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['./out.exe'],
         log: true,
       },
@@ -89,11 +89,11 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['ruby', 'main.rb'],
         log: true,
       },
@@ -105,7 +105,7 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
@@ -114,7 +114,7 @@ export const containers = {
         log: true,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['java', 'Main'],
         log: true,
       },
@@ -126,7 +126,7 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
@@ -135,7 +135,7 @@ export const containers = {
         log: true,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['./main'],
         log: true,
       },
@@ -147,7 +147,7 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
@@ -157,11 +157,11 @@ export const containers = {
       },
       {
         cmd: 'chmod',
-        params: ['777', './out.exe'],
+        params: ['+x', './out.exe'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['./out.exe'],
         log: true,
       },
@@ -173,11 +173,11 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['elixir', 'main.exs'],
         log: true,
       },
@@ -189,11 +189,11 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['go', 'run', 'main.go'],
         log: true,
       },
@@ -205,7 +205,7 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
@@ -215,11 +215,11 @@ export const containers = {
       },
       {
         cmd: 'chmod',
-        params: ['777', './out.exe'],
+        params: ['+x', './out.exe'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['./out.exe'],
         log: true,
       },
@@ -231,11 +231,11 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['dart', 'run', 'main.dart'],
         log: true,
       },
@@ -247,11 +247,11 @@ export const containers = {
     execution: [
       {
         cmd: 'chmod',
-        params: ['777', './start.sh'],
+        params: ['+x', 'bash.sh'],
         log: false,
       },
       {
-        cmd: './start.sh',
+        cmd: './bash.sh',
         params: ['perl', 'main.pl'],
         log: true,
       },

@@ -31,11 +31,11 @@ export class DockerService {
 
       await container.start();
 
-      const bashScript = getFileContent(`${__dirname}/templates/start.sh`);
+      const bashScript = getFileContent(`${__dirname}/templates/bash.sh`);
 
       const pack = tar.pack();
       pack.entry({ name: containerSettings.fileName }, code);
-      pack.entry({ name: 'start.sh' }, bashScript);
+      pack.entry({ name: 'bash.sh' }, bashScript);
       pack.finalize();
       await container.putArchive(pack, { path: '/app' });
       const statsStream = await container.stats({ stream: true });
@@ -77,9 +77,11 @@ export class DockerService {
         return;
       }
 
-      container.remove({ force: true }, (error) => {
-        this.logger.error('Error removing container' + error.message);
-      });
+      // container.remove({ force: true }, (error) => {
+      //   if (error) {
+      //     this.logger.error('Error removing container' + error.message);
+      //   }
+      // });
     }
   }
 

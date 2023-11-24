@@ -28,6 +28,12 @@
 
 ## Installation
 
+**Note:** When installing the project on a windows based system it is important to make sure the bash.sh file is still using the proper new line format for UNIX systems. You can convert the file to the right format using the following command:
+
+```bash
+$ dos2unix src/docker/templates/bash.sh
+```
+
 ```bash
 $ npm install
 ```
