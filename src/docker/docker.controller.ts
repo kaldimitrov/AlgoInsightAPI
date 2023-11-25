@@ -14,6 +14,10 @@ export class DockerController {
   @UseGuards(JwtAuthGuard)
   @Post('submit')
   submit(@Token() token, @Body() body: CodeSubmitDto) {
-    return this.dockerService.execute(body.code, { ...containers[body.language], version: body.version ?? 'latest' });
+    return this.dockerService.execute(
+      body.code,
+      { ...containers[body.language], version: body.version ?? 'latest' },
+      token.userId,
+    );
   }
 }

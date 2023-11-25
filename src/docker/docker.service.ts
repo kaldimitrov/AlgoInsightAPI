@@ -1,24 +1,37 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
 import * as Docker from 'dockerode';
 import * as tar from 'tar-stream';
 import { Container } from './models/container.model';
 import { getFileContent } from 'src/helpers/FileHelper';
 import { ExecStep } from './models/execStep.model';
 import { getDockerSocketPath } from 'src/helpers/OsHelper';
+import { REDIS } from 'src/redis/redis.constants';
+import { RedisClient } from 'src/redis/redis.providers';
+import { MAX_USER_CONTAINERS } from './constants';
+import { TRANSLATIONS } from 'src/config/translations';
 
 @Injectable()
 export class DockerService {
   private readonly logger = new Logger(DockerService.name);
   private readonly docker = new Docker({ socketPath: getDockerSocketPath() });
 
-  async execute(code: string, containerSettings: Container) {
+  constructor(@Inject(REDIS) private readonly redisClient: RedisClient) {}
+
+  async execute(code: string, containerSettings: Container, userId: number) {
     let container: Docker.Container;
+
+    await this.redisClient.hincrby('activeContainers', String(userId), 1);
+    const activeUserContainers = Number(await this.redisClient.hget('activeContainers', String(userId)));
+    if (activeUserContainers > MAX_USER_CONTAINERS) {
+      throw new BadRequestException(TRANSLATIONS.errors.execution.active_containers_limit);
+    }
+
     try {
       await this.pullImage(containerSettings.image, containerSettings.version);
       container = await this.docker.createContainer({
         Image: `${containerSettings.image}:${containerSettings.version}`,
         Tty: true,
-        name: 'NodeJs',
+        name: `container-${userId}-${activeUserContainers}`,
         WorkingDir: '/app',
         NetworkDisabled: true,
         HostConfig: {
@@ -55,14 +68,15 @@ export class DockerService {
       }
       container.wait();
 
-      const { maxCPU, maxMemory } = this.computeMaxStats(statsData);
+      const usageData = this.computeMaxStats(statsData);
       const timeData = await this.getTimeResults(container, 'time.txt');
 
-      return { ...timeData, maxCPU, maxMemory, statsData, output };
+      return { ...timeData, ...usageData, statsData, output };
     } catch (error) {
       this.logger.error('Error running docker', error);
       throw error;
     } finally {
+      await this.redisClient.hset('activeContainers', String(userId), Math.max(0, activeUserContainers - 1));
       if (!container) {
         return;
       }
