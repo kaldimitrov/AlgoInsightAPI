@@ -7,6 +7,7 @@ export const TRANSLATIONS = {
       invalid_credentials: 'invalid_credentials_error',
     },
     execution: {
+      max_code_length: 'max_code_length',
       active_containers_limit: 'active_containers_limit',
     },
   },

@@ -1,10 +1,8 @@
-import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
-import { MAX_CODE_LENGTH } from '../constants';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { Languages } from '../enums/languages';
 
 export class CodeSubmitDto {
   @IsString()
-  @MaxLength(MAX_CODE_LENGTH)
   code: string;
 
   @IsEnum(Languages)

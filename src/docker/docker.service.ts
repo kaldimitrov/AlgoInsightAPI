@@ -7,25 +7,34 @@ import { ExecStep } from './models/execStep.model';
 import { getDockerSocketPath } from 'src/helpers/OsHelper';
 import { REDIS } from 'src/redis/redis.constants';
 import { RedisClient } from 'src/redis/redis.providers';
-import { MAX_USER_CONTAINERS } from './constants';
+import { MB_SIZE } from './constants';
 import { TRANSLATIONS } from 'src/config/translations';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class DockerService {
   private readonly logger = new Logger(DockerService.name);
   private readonly docker = new Docker({ socketPath: getDockerSocketPath() });
 
-  constructor(@Inject(REDIS) private readonly redisClient: RedisClient) {}
+  constructor(
+    @Inject(REDIS) private readonly redisClient: RedisClient,
+    private readonly userService: UserService,
+  ) {}
 
   async execute(code: string, containerSettings: Container, userId: number) {
-    let container: Docker.Container;
+    const user = await this.userService.findOne(userId);
 
     await this.redisClient.hincrby('activeContainers', String(userId), 1);
     const activeUserContainers = Number(await this.redisClient.hget('activeContainers', String(userId)));
-    if (activeUserContainers > MAX_USER_CONTAINERS) {
+    if (activeUserContainers > user.execution_concurrency) {
       throw new BadRequestException(TRANSLATIONS.errors.execution.active_containers_limit);
     }
 
+    if (code.length > user.max_code_length) {
+      throw new BadRequestException(TRANSLATIONS.errors.execution.max_code_length);
+    }
+
+    let container: Docker.Container;
     try {
       await this.pullImage(containerSettings.image, containerSettings.version);
       container = await this.docker.createContainer({
@@ -35,6 +44,7 @@ export class DockerService {
         WorkingDir: '/app',
         NetworkDisabled: true,
         HostConfig: {
+          Memory: MB_SIZE * user.max_memory_limit,
           AutoRemove: true,
           NetworkMode: 'none',
         },
