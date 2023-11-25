@@ -14,9 +14,7 @@ export class DockerService {
   async execute(code: string, containerSettings: Container) {
     let container: Docker.Container;
     try {
-      const pullStream = await this.docker.pull(`${containerSettings.image}:${containerSettings.version}`);
-      await new Promise((res) => this.docker.modem.followProgress(pullStream, res));
-
+      await this.pullImage(containerSettings.image, containerSettings.version);
       container = await this.docker.createContainer({
         Image: `${containerSettings.image}:${containerSettings.version}`,
         Tty: true,
@@ -31,13 +29,11 @@ export class DockerService {
 
       await container.start();
 
-      const bashScript = getFileContent(`${__dirname}/templates/bash.sh`);
+      await this.addContainerFiles(container, [
+        { name: 'bash.sh', content: getFileContent(`${__dirname}/templates/bash.sh`) },
+        { name: containerSettings.fileName, content: code },
+      ]);
 
-      const pack = tar.pack();
-      pack.entry({ name: containerSettings.fileName }, code);
-      pack.entry({ name: 'bash.sh' }, bashScript);
-      pack.finalize();
-      await container.putArchive(pack, { path: '/app' });
       const statsStream = await container.stats({ stream: true });
 
       const statsData = [];
@@ -59,35 +55,10 @@ export class DockerService {
       }
       container.wait();
 
-      const maxCPU = statsData.reduce((max, currentValue) => {
-        return currentValue.cpu > max ? currentValue.cpu : max;
-      }, -Infinity);
+      const { maxCPU, maxMemory } = this.computeMaxStats(statsData);
+      const timeData = await this.getTimeResults(container, 'time.txt');
 
-      const maxMemory = statsData.reduce((max, currentValue) => {
-        return currentValue.memory > max ? currentValue.memory : max;
-      }, -Infinity);
-
-      const exec = await container.exec({
-        Cmd: ['cat', 'time.txt'],
-        AttachStdout: true,
-        AttachStderr: true,
-      });
-
-      const execStart = await exec.start({});
-      const time = Number(
-        await new Promise((resolve, reject) => {
-          const chunks = [];
-          execStart.on('data', (data) => {
-            chunks.push(data.slice(8));
-          });
-          execStart.on('end', () => {
-            resolve(Buffer.concat(chunks).toString('utf-8'));
-          });
-          execStart.on('error', (err) => reject(err));
-        }),
-      );
-
-      return { time, maxCPU, maxMemory, statsData, output };
+      return { ...timeData, maxCPU, maxMemory, statsData, output };
     } catch (error) {
       this.logger.error('Error running docker', error);
       throw error;
@@ -104,7 +75,7 @@ export class DockerService {
     }
   }
 
-  async execStep(container: Docker.Container, execStep: ExecStep) {
+  private async execStep(container: Docker.Container, execStep: ExecStep) {
     const exec = await container.exec({
       Cmd: [execStep.cmd, ...execStep.params],
       AttachStdout: true,
@@ -126,7 +97,7 @@ export class DockerService {
     return stepOutput;
   }
 
-  processContainerStats(stats: Docker.ContainerStats) {
+  private processContainerStats(stats: Docker.ContainerStats) {
     if (!stats) {
       return null;
     }
@@ -140,5 +111,62 @@ export class DockerService {
     const cpuPercent = (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100;
 
     return { memory: Number(memoryUsage.toFixed(2)), cpu: Number(cpuPercent.toFixed(2)) };
+  }
+
+  private async pullImage(image: string, version: string) {
+    const pullStream = await this.docker.pull(`${image}:${version}`);
+    return new Promise((res) => this.docker.modem.followProgress(pullStream, res));
+  }
+
+  private addContainerFiles(container: Docker.Container, files: { name: string; content: string }[]) {
+    const pack = tar.pack();
+    for (const file of files) {
+      pack.entry({ name: file.name }, file.content);
+    }
+    pack.finalize();
+    return container.putArchive(pack, { path: '/app' });
+  }
+
+  private async getTimeResults(container: Docker.Container, fileName: string) {
+    const exec = await container.exec({
+      Cmd: ['cat', fileName],
+      AttachStdout: true,
+      AttachStderr: true,
+    });
+
+    const execStart = await exec.start({});
+    const fileData = await new Promise<string>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      execStart.on('data', (data: Buffer) => {
+        chunks.push(data);
+      });
+      execStart.on('end', () => {
+        resolve(Buffer.concat(chunks).toString('utf-8'));
+      });
+      execStart.on('error', (err: any) => reject(err));
+    });
+
+    const regexStart = /Start:\s+(\d+)/;
+    const regexEnd = /End:\s+(\d+)/;
+
+    const startTimeMatch = fileData.match(regexStart);
+    const endTimeMatch = fileData.match(regexEnd);
+
+    const startTime = startTimeMatch ? parseInt(startTimeMatch[1]) : null;
+    const endTime = endTimeMatch ? parseInt(endTimeMatch[1]) : null;
+
+    return { startTime, endTime, totalTime: endTime - startTime };
+  }
+
+  private computeMaxStats(statsData: any[]): { maxCPU: number; maxMemory: number } {
+    const maxCPU = statsData.reduce((max, currentValue) => {
+      return currentValue.cpu > max ? currentValue.cpu : max;
+    }, -Infinity);
+
+    const maxMemory = statsData.reduce((max, currentValue) => {
+      return currentValue.memory > max ? currentValue.memory : max;
+    }, -Infinity);
+
+    return { maxCPU, maxMemory };
   }
 }

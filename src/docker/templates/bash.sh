@@ -1,19 +1,18 @@
 #!/bin/bash
 
-t_start_time=$(date +"%T.%3N")
-t_start_time_unix=$(date -d "$t_start_time" +"%s%3N" 2>/dev/null)
+file="time.txt"
+
+first_start_time=$(date +"%s%3N" 2>/dev/null)
 
 "$@" &
 
-t2_start_time=$(date +"%T.%3N")
-t2_start_time_unix=$(date -d "$t2_start_time" +"%s%3N" 2>/dev/null)
+second_start_time=$(date +"%s%3N" 2>/dev/null)
 
 pid=$!
 wait "$pid"
 
-end_time=$(date +"%T.%3N")
-end_time_unix=$(date -d "$end_time" +"%s%3N" 2>/dev/null)
-file="time.txt"
+start_time=$((($first_start_time + $second_start_time) / 2))
+end_time=$(date +"%s%3N" 2>/dev/null)
 
-result=$(($end_time_unix - ($t_start_time_unix + $t2_start_time_unix) / 2))
-echo "$result" >> "$file"
+echo "Start: $start_time" >> "$file"
+echo "End: $end_time" >> "$file"
