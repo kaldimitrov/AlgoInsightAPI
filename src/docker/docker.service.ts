@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import * as Docker from 'dockerode';
 import * as tar from 'tar-stream';
 import { Container } from './models/container.model';
@@ -10,9 +10,10 @@ import { RedisClient } from 'src/redis/redis.providers';
 import { MB_SIZE } from './constants';
 import { TRANSLATIONS } from 'src/config/translations';
 import { UserService } from 'src/user/user.service';
+import { ExecutionStats } from 'src/history/dto/stats.dto';
 
 @Injectable()
-export class DockerService {
+export class DockerService implements OnApplicationBootstrap {
   private readonly logger = new Logger(DockerService.name);
   private readonly docker = new Docker({ socketPath: getDockerSocketPath() });
 
@@ -21,12 +22,33 @@ export class DockerService {
     private readonly userService: UserService,
   ) {}
 
+  async onApplicationBootstrap() {
+    const activeContainers = await this.redisClient.hgetall('activeContainers');
+    if (!activeContainers || !Object.keys(activeContainers).length) {
+      return;
+    }
+
+    for (const [key, value] of Object.entries(activeContainers)) {
+      const containerIds = JSON.parse(value);
+
+      containerIds.forEach(async (id: string) => {
+        this.docker.getContainer(id).remove({ force: true }, (error) => {
+          if (error) {
+            this.logger.error(`Error removing container with id ${id} from user ${key}` + error.message);
+          }
+        });
+      });
+    }
+
+    await this.redisClient.del('activeContainers');
+  }
+
   async execute(code: string, containerSettings: Container, userId: number) {
     const user = await this.userService.findOne(userId);
 
-    await this.redisClient.hincrby('activeContainers', String(userId), 1);
-    const activeUserContainers = Number(await this.redisClient.hget('activeContainers', String(userId)));
-    if (activeUserContainers > user.execution_concurrency) {
+    let userContainers = JSON.parse(await this.redisClient.hget('activeContainers', String(userId))) || [];
+    const userContainersCount = userContainers.length;
+    if (userContainersCount >= user.execution_concurrency) {
       throw new BadRequestException(TRANSLATIONS.errors.execution.active_containers_limit);
     }
 
@@ -40,7 +62,7 @@ export class DockerService {
       container = await this.docker.createContainer({
         Image: `${containerSettings.image}:${containerSettings.version}`,
         Tty: true,
-        name: `container-${userId}-${activeUserContainers}`,
+        name: `container-${userId}-${userContainersCount}`,
         WorkingDir: '/app',
         NetworkDisabled: true,
         HostConfig: {
@@ -50,6 +72,8 @@ export class DockerService {
         },
       });
 
+      userContainers.push(container.id);
+      await this.redisClient.hset('activeContainers', String(userId), JSON.stringify(userContainers));
       await container.start();
 
       await this.addContainerFiles(container, [
@@ -59,7 +83,7 @@ export class DockerService {
 
       const statsStream = await container.stats({ stream: true });
 
-      const statsData = [];
+      const statsData: ExecutionStats[] = [];
       statsStream.on('data', (data) => {
         const time = Date.now();
         const processedData = this.processContainerStats(JSON.parse(data.toString('utf-8').replace(/\n/g, '')));
@@ -86,16 +110,22 @@ export class DockerService {
       this.logger.error('Error running docker', error);
       throw error;
     } finally {
-      await this.redisClient.hset('activeContainers', String(userId), Math.max(0, activeUserContainers - 1));
       if (!container) {
         return;
       }
 
       container.remove({ force: true }, (error) => {
         if (error) {
-          this.logger.error('Error removing container' + error.message);
+          this.logger.error(`Error removing container with id ${container.id}` + error.message);
         }
       });
+
+      userContainers = JSON.parse(await this.redisClient.hget('activeContainers', String(userId))) || [];
+      await this.redisClient.hset(
+        'activeContainers',
+        String(userId),
+        JSON.stringify(userContainers.filter((contId) => contId != container.id)),
+      );
     }
   }
 

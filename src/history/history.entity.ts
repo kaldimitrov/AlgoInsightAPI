@@ -1,14 +1,4 @@
-import { ApiHideProperty } from '@nestjs/swagger';
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-  Unique,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import EntityHelper from 'src/helpers/EntityHelper';
 import { ExecutionStatus } from './enums/executionStatus';
 import { ExecutionStats } from './dto/stats.dto';
@@ -20,10 +10,16 @@ export class History {
   id: string;
 
   @Column({ nullable: true })
-  execution_time: number | null;
+  execution_time?: number;
 
-  @Column('jsonb', { array: true, nullable: true })
-  stats: ExecutionStats[] | null;
+  @Column({ type: 'jsonb', array: true, nullable: true })
+  stats?: ExecutionStats[];
+
+  @Column({ type: 'decimal', array: true, nullable: true, ...EntityHelper.getDecimalTransformer() })
+  max_memory?: number;
+
+  @Column({ type: 'decimal', array: true, nullable: true, ...EntityHelper.getDecimalTransformer() })
+  max_cpu?: number;
 
   @Column({
     type: 'enum',
@@ -33,10 +29,10 @@ export class History {
   status: ExecutionStatus;
 
   @Column({ nullable: true })
-  start_time: number | null;
+  start_time?: number;
 
   @Column({ nullable: true })
-  end_time: number | null;
+  end_time?: number;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })

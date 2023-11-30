@@ -34,6 +34,10 @@
 $ dos2unix src/docker/templates/bash.sh
 ```
 
+```powershell
+$ ((Get-Content src/docker/templates/bash.sh) -join "`n") + "`n" | Set-Content -NoNewline src/docker/templates/bash.sh
+```
+
 ```bash
 $ npm install
 ```
