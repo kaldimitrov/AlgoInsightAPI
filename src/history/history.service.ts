@@ -8,7 +8,11 @@ import { AuthService } from 'src/auth/auth.service';
 export class HistoryService {
   constructor(
     @InjectRepository(History)
-    private readonly userRepository: Repository<History>,
+    private readonly historyRepository: Repository<History>,
     private readonly authService: AuthService,
   ) {}
+
+  saveHistory(dto: Partial<History>) {
+    return this.historyRepository.save(dto);
+  }
 }

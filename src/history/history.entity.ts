@@ -1,8 +1,17 @@
-import { Column, Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import EntityHelper from 'src/helpers/EntityHelper';
 import { ExecutionStatus } from './enums/executionStatus';
-import { ExecutionStats } from './dto/stats.dto';
+import { ExecutionStats } from 'src/docker/dto/stats.dto';
 import { User } from 'src/user/user.entity';
+import { Languages } from 'src/docker/enums/languages';
 
 @Entity('execution_history')
 export class History {
@@ -28,6 +37,15 @@ export class History {
   })
   status: ExecutionStatus;
 
+  @Column({
+    type: 'enum',
+    enum: Languages,
+  })
+  language: Languages;
+
+  @Column({ nullable: true })
+  logs?: string;
+
   @Column({ nullable: true })
   start_time?: number;
 
@@ -40,6 +58,12 @@ export class History {
 
   @Column()
   user_id: number;
+
+  @CreateDateColumn()
+  created_at: Date;
+
+  @UpdateDateColumn()
+  updated_at: Date;
 
   constructor(partial: Partial<History>) {
     Object.assign(this, partial);

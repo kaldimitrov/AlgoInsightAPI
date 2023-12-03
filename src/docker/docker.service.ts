@@ -10,7 +10,7 @@ import { RedisClient } from 'src/redis/redis.providers';
 import { MB_SIZE } from './constants';
 import { TRANSLATIONS } from 'src/config/translations';
 import { UserService } from 'src/user/user.service';
-import { ExecutionStats } from 'src/history/dto/stats.dto';
+import { ExecutionStats } from './dto/stats.dto';
 
 @Injectable()
 export class DockerService implements OnApplicationBootstrap {
@@ -100,7 +100,7 @@ export class DockerService implements OnApplicationBootstrap {
           output.push(data);
         }
       }
-      container.wait();
+      await container.wait();
 
       const usageData = this.computeMaxStats(statsData);
       const timeData = await this.getTimeResults(container, 'time.txt');
