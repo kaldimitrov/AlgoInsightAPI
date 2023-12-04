@@ -3,10 +3,11 @@ import { DockerController } from './docker.controller';
 import { DockerService } from './docker.service';
 import { RedisModule } from 'src/redis/redis.module';
 import { UserModule } from 'src/user/user.module';
+import { HistoryModule } from 'src/history/history.module';
 
 @Module({
+  imports: [RedisModule, UserModule, HistoryModule],
   controllers: [DockerController],
-  imports: [RedisModule, UserModule],
   providers: [DockerService],
 })
 export class DockerModule {}

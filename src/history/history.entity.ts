@@ -21,13 +21,13 @@ export class History {
   @Column({ nullable: true })
   execution_time?: number;
 
-  @Column({ type: 'jsonb', array: true, nullable: true })
+  @Column({ type: 'jsonb', nullable: true, ...EntityHelper.getJsonTransformer() })
   stats?: ExecutionStats[];
 
-  @Column({ type: 'decimal', array: true, nullable: true, ...EntityHelper.getDecimalTransformer() })
+  @Column({ type: 'decimal', nullable: true, ...EntityHelper.getDecimalTransformer() })
   max_memory?: number;
 
-  @Column({ type: 'decimal', array: true, nullable: true, ...EntityHelper.getDecimalTransformer() })
+  @Column({ type: 'decimal', nullable: true, ...EntityHelper.getDecimalTransformer() })
   max_cpu?: number;
 
   @Column({
@@ -35,7 +35,7 @@ export class History {
     enum: ExecutionStatus,
     default: ExecutionStatus.PENDING,
   })
-  status: ExecutionStatus;
+  status = ExecutionStatus.PENDING;
 
   @Column({
     type: 'enum',

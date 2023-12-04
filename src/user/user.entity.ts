@@ -27,9 +27,9 @@ export class User {
     enum: Roles,
     default: Roles.USER,
   })
-  role: Roles;
+  role: Roles = Roles.USER;
 
-  @Column('decimal', EntityHelper.getDecimalTransformer())
+  @Column('decimal', { default: 512.0, ...EntityHelper.getDecimalTransformer() })
   max_memory_limit: number = 512.0;
 
   @Column({ default: 2 })

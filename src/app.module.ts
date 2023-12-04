@@ -4,6 +4,7 @@ import configuration from './config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { DockerModule } from './docker/docker.module';
+import { HistoryModule } from './history/history.module';
 
 /* eslint-disable */
 const SnakeNamingStrategy = require('typeorm-naming-strategies').SnakeNamingStrategy;
@@ -37,6 +38,7 @@ const SnakeNamingStrategy = require('typeorm-naming-strategies').SnakeNamingStra
     }),
     UserModule,
     DockerModule,
+    HistoryModule,
   ],
   controllers: [],
   providers: [Logger],

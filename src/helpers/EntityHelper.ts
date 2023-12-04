@@ -12,4 +12,8 @@ export default class EntityHelper {
         }
       : { transformer: { to: (value) => value, from: (value) => parseFloat(value) } };
   }
+
+  static getJsonTransformer() {
+    return { transformer: { to: (value) => JSON.stringify(value), from: (value) => JSON.parse(value) } };
+  }
 }

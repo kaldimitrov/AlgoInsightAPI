@@ -11,6 +11,9 @@ import { MB_SIZE } from './constants';
 import { TRANSLATIONS } from 'src/config/translations';
 import { UserService } from 'src/user/user.service';
 import { ExecutionStats } from './dto/stats.dto';
+import { HistoryService } from 'src/history/history.service';
+import { Languages } from './enums/languages';
+import { ExecutionStatus } from 'src/history/enums/executionStatus';
 
 @Injectable()
 export class DockerService implements OnApplicationBootstrap {
@@ -20,6 +23,7 @@ export class DockerService implements OnApplicationBootstrap {
   constructor(
     @Inject(REDIS) private readonly redisClient: RedisClient,
     private readonly userService: UserService,
+    private readonly historyService: HistoryService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -43,7 +47,7 @@ export class DockerService implements OnApplicationBootstrap {
     await this.redisClient.del('activeContainers');
   }
 
-  async execute(code: string, containerSettings: Container, userId: number) {
+  async execute(code: string, containerSettings: Container, userId: number, language: Languages) {
     const user = await this.userService.findOne(userId);
 
     let userContainers = JSON.parse(await this.redisClient.hget('activeContainers', String(userId))) || [];
@@ -56,6 +60,7 @@ export class DockerService implements OnApplicationBootstrap {
       throw new BadRequestException(TRANSLATIONS.errors.execution.max_code_length);
     }
 
+    const history = await this.historyService.createHistory({ user_id: userId, language });
     let container: Docker.Container;
     try {
       await this.pullImage(containerSettings.image, containerSettings.version);
@@ -100,13 +105,22 @@ export class DockerService implements OnApplicationBootstrap {
           output.push(data);
         }
       }
-      await container.wait();
 
       const usageData = this.computeMaxStats(statsData);
       const timeData = await this.getTimeResults(container, 'time.txt');
 
-      return { ...timeData, ...usageData, statsData, output };
+      return this.historyService.updateHistoryProperties(history.id, {
+        status: ExecutionStatus.SUCCESS,
+        execution_time: timeData.totalTime,
+        start_time: timeData.startTime,
+        end_time: timeData.endTime,
+        stats: statsData,
+        max_cpu: usageData.maxCPU,
+        max_memory: usageData.maxMemory,
+        logs: String(output),
+      });
     } catch (error) {
+      await this.historyService.updateHistoryProperties(history.id, { status: ExecutionStatus.ERRORED });
       this.logger.error('Error running docker', error);
       throw error;
     } finally {
@@ -215,11 +229,11 @@ export class DockerService implements OnApplicationBootstrap {
   private computeMaxStats(statsData: any[]): { maxCPU: number; maxMemory: number } {
     const maxCPU = statsData.reduce((max, currentValue) => {
       return currentValue.cpu > max ? currentValue.cpu : max;
-    }, -Infinity);
+    }, 0);
 
     const maxMemory = statsData.reduce((max, currentValue) => {
       return currentValue.memory > max ? currentValue.memory : max;
-    }, -Infinity);
+    }, 0);
 
     return { maxCPU, maxMemory };
   }

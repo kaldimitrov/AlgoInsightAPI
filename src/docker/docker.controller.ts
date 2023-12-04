@@ -18,6 +18,7 @@ export class DockerController {
       body.code,
       { ...containers[body.language], version: body.version ?? 'latest' },
       token.userId,
+      body.language,
     );
   }
 }
