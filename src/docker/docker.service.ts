@@ -82,7 +82,10 @@ export class DockerService implements OnApplicationBootstrap {
       await container.start();
 
       await this.addContainerFiles(container, [
-        { name: 'bash.sh', content: getFileContent(`${__dirname}/templates/bash.sh`) },
+        {
+          name: 'bash.sh',
+          content: getFileContent(`${__dirname}/templates/bash.sh`, '{{file_name}}', `${history.id}.txt`),
+        },
         { name: containerSettings.fileName, content: code },
       ]);
 
@@ -107,7 +110,7 @@ export class DockerService implements OnApplicationBootstrap {
       }
 
       const usageData = this.computeMaxStats(statsData);
-      const timeData = await this.getTimeResults(container, 'time.txt');
+      const timeData = await this.getTimeResults(container, `${history.id}.txt`);
 
       return this.historyService.updateHistoryProperties(history.id, {
         status: ExecutionStatus.SUCCESS,
@@ -120,9 +123,8 @@ export class DockerService implements OnApplicationBootstrap {
         logs: String(output),
       });
     } catch (error) {
-      await this.historyService.updateHistoryProperties(history.id, { status: ExecutionStatus.ERRORED });
       this.logger.error('Error running docker', error);
-      throw error;
+      return this.historyService.updateHistoryProperties(history.id, { status: ExecutionStatus.ERRORED });
     } finally {
       if (!container) {
         return;

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-file="time.txt"
+file="{{file_name}}"
 
 first_start_time=$(date +"%s%3N" 2>/dev/null)
 
