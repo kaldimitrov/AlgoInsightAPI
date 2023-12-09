@@ -1,6 +1,8 @@
 #!/bin/bash
 
-file="{{file_name}}"
+rm bash.sh
+
+file="/tmp/{{file_name}}"
 
 first_start_time=$(date +"%s%3N" 2>/dev/null)
 

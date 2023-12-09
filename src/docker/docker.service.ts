@@ -7,13 +7,24 @@ import { ExecStep } from './models/execStep.model';
 import { getDockerSocketPath } from 'src/helpers/OsHelper';
 import { REDIS } from 'src/redis/redis.constants';
 import { RedisClient } from 'src/redis/redis.providers';
-import { MB_SIZE } from './constants';
+import { MB_SIZE, TIMEOUT_JOB } from './constants';
 import { TRANSLATIONS } from 'src/config/translations';
 import { UserService } from 'src/user/user.service';
-import { ExecutionStats } from './dto/stats.dto';
 import { HistoryService } from 'src/history/history.service';
 import { Languages } from './enums/languages';
 import { ExecutionStatus } from 'src/history/enums/executionStatus';
+import { removeControlCharacters } from 'src/helpers/StringHelper';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
+import { createLock } from 'ioredis-lock';
+
+/*
+TODO:
+ - improve logs to include log level and time
+ - add filters for history
+ - create endpoints for getting history data
+ - create endpoint for getting status of current executions (state)
+*/
 
 @Injectable()
 export class DockerService implements OnApplicationBootstrap {
@@ -24,6 +35,7 @@ export class DockerService implements OnApplicationBootstrap {
     @Inject(REDIS) private readonly redisClient: RedisClient,
     private readonly userService: UserService,
     private readonly historyService: HistoryService,
+    @InjectQueue('docker-queue') private readonly dockerQueue: Queue,
   ) {}
 
   async onApplicationBootstrap() {
@@ -33,12 +45,12 @@ export class DockerService implements OnApplicationBootstrap {
     }
 
     for (const [key, value] of Object.entries(activeContainers)) {
-      const containerIds = JSON.parse(value);
+      const containers = JSON.parse(value);
 
-      containerIds.forEach(async (id: string) => {
-        this.docker.getContainer(id).remove({ force: true }, (error) => {
+      containers.forEach(async (cont: { id: string }) => {
+        this.docker.getContainer(cont.id).remove({ force: true }, (error) => {
           if (error) {
-            this.logger.error(`Error removing container with id ${id} from user ${key}` + error.message);
+            this.logger.error(`Error removing container with id ${cont.id} from user ${key} ` + error.message);
           }
         });
       });
@@ -49,6 +61,10 @@ export class DockerService implements OnApplicationBootstrap {
 
   async execute(code: string, containerSettings: Container, userId: number, language: Languages) {
     const user = await this.userService.findOne(userId);
+    const lock = createLock(this.redisClient, {
+      retries: 10,
+      delay: 200,
+    });
 
     let userContainers = JSON.parse(await this.redisClient.hget('activeContainers', String(userId))) || [];
     const userContainersCount = userContainers.length;
@@ -61,6 +77,8 @@ export class DockerService implements OnApplicationBootstrap {
     }
 
     const history = await this.historyService.createHistory({ user_id: userId, language });
+    history.status = ExecutionStatus.SUCCESS;
+
     let container: Docker.Container;
     try {
       await this.pullImage(containerSettings.image, containerSettings.version);
@@ -72,15 +90,28 @@ export class DockerService implements OnApplicationBootstrap {
         NetworkDisabled: true,
         HostConfig: {
           Memory: MB_SIZE * user.max_memory_limit,
-          AutoRemove: true,
           NetworkMode: 'none',
         },
       });
 
-      userContainers.push(container.id);
-      await this.redisClient.hset('activeContainers', String(userId), JSON.stringify(userContainers));
-      await container.start();
+      await this.dockerQueue.add(
+        TIMEOUT_JOB,
+        { userId: user.id, containerId: container.id },
+        {
+          jobId: `dockerTimeout-${userId}-${userContainersCount}`,
+          delay: user.max_runtime_duration,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      );
 
+      await lock.acquire(`lock:activeContainer-${user.id}`);
+      const userContainers = JSON.parse(await this.redisClient.hget('activeContainers', String(userId))) || [];
+      userContainers.push({ id: container.id, status: ExecutionStatus.PENDING });
+      await this.redisClient.hset('activeContainers', String(userId), JSON.stringify(userContainers));
+      await lock.release();
+
+      await container.start();
       await this.addContainerFiles(container, [
         {
           name: 'bash.sh',
@@ -90,45 +121,34 @@ export class DockerService implements OnApplicationBootstrap {
       ]);
 
       const statsStream = await container.stats({ stream: true });
-
-      const statsData: ExecutionStats[] = [];
       statsStream.on('data', (data) => {
         const time = Date.now();
         const processedData = this.processContainerStats(JSON.parse(data.toString('utf-8').replace(/\n/g, '')));
 
         if (processedData) {
-          statsData.push({ time, cpu: processedData.cpu, memory: processedData.memory });
+          history.stats.push({ time, cpu: processedData.cpu, memory: processedData.memory });
         }
       });
 
-      const output = [];
       for (const execStep of containerSettings.execution) {
         const data = await this.execStep(container, execStep);
         if (execStep.log && data) {
-          output.push(data);
+          history.logs = history.logs.concat(removeControlCharacters(data));
         }
       }
-
-      const usageData = this.computeMaxStats(statsData);
-      const timeData = await this.getTimeResults(container, `${history.id}.txt`);
-
-      return this.historyService.updateHistoryProperties(history.id, {
-        status: ExecutionStatus.SUCCESS,
-        execution_time: timeData.totalTime,
-        start_time: timeData.startTime,
-        end_time: timeData.endTime,
-        stats: statsData,
-        max_cpu: usageData.maxCPU,
-        max_memory: usageData.maxMemory,
-        logs: String(output),
-      });
     } catch (error) {
+      history.status = ExecutionStatus.ERRORED;
       this.logger.error('Error running docker', error);
-      return this.historyService.updateHistoryProperties(history.id, { status: ExecutionStatus.ERRORED });
     } finally {
       if (!container) {
         return;
       }
+
+      if (!(await container.inspect()).State.Running) {
+        await container.start();
+      }
+      const usageData = this.computeMaxStats(history.stats);
+      const timeData = await this.getTimeResults(container, `/tmp/${history.id}.txt`);
 
       container.remove({ force: true }, (error) => {
         if (error) {
@@ -136,12 +156,30 @@ export class DockerService implements OnApplicationBootstrap {
         }
       });
 
+      await lock.acquire(`lock:activeContainer-${user.id}`);
       userContainers = JSON.parse(await this.redisClient.hget('activeContainers', String(userId))) || [];
-      await this.redisClient.hset(
-        'activeContainers',
-        String(userId),
-        JSON.stringify(userContainers.filter((contId) => contId != container.id)),
-      );
+
+      const redisContainer = userContainers.find((cont: { id: string }) => cont.id == container.id);
+      if (redisContainer?.status == ExecutionStatus.TIMEOUT) {
+        history.status = ExecutionStatus.TIMEOUT;
+      }
+
+      userContainers = userContainers.filter((cont: { id: string }) => cont.id != container.id);
+      if (userContainers.length) {
+        await this.redisClient.hset('activeContainers', String(userId), JSON.stringify(userContainers));
+      } else {
+        await this.redisClient.hdel('activeContainers', String(userId));
+      }
+      await lock.release();
+
+      return this.historyService.updateHistory({
+        ...history,
+        max_cpu: usageData.maxCPU,
+        max_memory: usageData.maxMemory,
+        start_time: timeData.startTime,
+        end_time: timeData.endTime,
+        execution_time: timeData.totalTime,
+      });
     }
   }
 
@@ -153,13 +191,14 @@ export class DockerService implements OnApplicationBootstrap {
     });
 
     const execStart = await exec.start({});
-    const stepOutput = await new Promise((resolve, reject) => {
-      const chunks = [];
+    const stepOutput: string = await new Promise((resolve, reject) => {
+      let outputBuffer = Buffer.alloc(0);
       execStart.on('data', (data) => {
-        chunks.push(data.slice(8));
+        const logLevel = data.readUInt8(0);
+        outputBuffer = Buffer.concat([outputBuffer, data.slice(8)]);
       });
       execStart.on('end', () => {
-        resolve(Buffer.concat(chunks).toString('utf-8'));
+        resolve(outputBuffer.toString('utf-8'));
       });
       execStart.on('error', (err) => reject(err));
     });
@@ -225,7 +264,7 @@ export class DockerService implements OnApplicationBootstrap {
     const startTime = startTimeMatch ? parseInt(startTimeMatch[1]) : null;
     const endTime = endTimeMatch ? parseInt(endTimeMatch[1]) : null;
 
-    return { startTime, endTime, totalTime: endTime - startTime };
+    return { startTime, endTime, totalTime: endTime - startTime || null };
   }
 
   private computeMaxStats(statsData: any[]): { maxCPU: number; maxMemory: number } {

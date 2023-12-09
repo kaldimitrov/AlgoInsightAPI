@@ -22,7 +22,7 @@ export class CreateExecutionHistoryTable1701712578051 implements MigrationInterf
         {
           name: 'stats',
           type: 'jsonb',
-          isNullable: true,
+          default: "'[]'::jsonb",
         },
         {
           name: 'max_memory',
@@ -48,7 +48,7 @@ export class CreateExecutionHistoryTable1701712578051 implements MigrationInterf
         {
           name: 'logs',
           type: 'text',
-          isNullable: true,
+          default: '\'\''
         },
         {
           name: 'start_time',
@@ -80,7 +80,7 @@ export class CreateExecutionHistoryTable1701712578051 implements MigrationInterf
           columnNames: ['user_id'],
           referencedTableName: 'users',
           referencedColumnNames: ['id'],
-          onDelete: 'CASCADE',
+          onDelete: 'SET NULL',
         },
       ],
     }));

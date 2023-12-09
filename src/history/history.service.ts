@@ -2,9 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { History } from './history.entity';
-import { AuthService } from 'src/auth/auth.service';
 import { CreateHistoryDto } from './dto/history.dto';
-import { ExecutionStatus } from './enums/executionStatus';
 
 @Injectable()
 export class HistoryService {
@@ -18,14 +16,10 @@ export class HistoryService {
   }
 
   createHistory(dto: CreateHistoryDto) {
-    return this.historyRepository.save(dto);
+    return this.historyRepository.save(new History(dto));
   }
 
-  async updateHistoryProperties(historyId: string, propertiesToUpdate: Partial<History>) {
-    const history = await this.getHistoryById(historyId);
-
-    Object.assign(history, propertiesToUpdate);
-
+  async updateHistory(history: Partial<History>) {
     return this.historyRepository.save(history);
   }
 }

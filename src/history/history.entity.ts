@@ -21,8 +21,8 @@ export class History {
   @Column({ nullable: true })
   execution_time?: number;
 
-  @Column({ type: 'jsonb', nullable: true, ...EntityHelper.getJsonTransformer() })
-  stats?: ExecutionStats[];
+  @Column({ type: 'jsonb', default: '[]', ...EntityHelper.getJsonTransformer() })
+  stats: ExecutionStats[] = [];
 
   @Column({ type: 'decimal', nullable: true, ...EntityHelper.getDecimalTransformer() })
   max_memory?: number;
@@ -43,8 +43,8 @@ export class History {
   })
   language: Languages;
 
-  @Column({ nullable: true })
-  logs?: string;
+  @Column({ default: '' })
+  logs: string = '';
 
   @Column({ nullable: true })
   start_time?: number;
