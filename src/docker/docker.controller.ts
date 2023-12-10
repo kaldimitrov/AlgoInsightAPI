@@ -5,6 +5,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Token } from 'src/auth/decorators/user.decorator';
 import { containers } from 'src/config/containers';
+import { TokenPayload } from 'src/auth/models/token.model';
 
 @ApiTags('Code Endpoints')
 @Controller('code')
@@ -13,7 +14,7 @@ export class DockerController {
 
   @UseGuards(JwtAuthGuard)
   @Post('submit')
-  submit(@Token() token, @Body() body: CodeSubmitDto) {
+  submit(@Token() token: TokenPayload, @Body() body: CodeSubmitDto) {
     return this.dockerService.execute(
       body.code,
       { ...containers[body.language], version: body.version ?? 'latest' },

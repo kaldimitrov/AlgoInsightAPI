@@ -10,3 +10,14 @@ export function getDockerSocketPath() {
       return '/var/run/docker.sock';
   }
 }
+
+export function getLogLevel(level: number) {
+  switch (level) {
+    case 0:
+      return 'INPUT';
+    case 1:
+      return 'INFO';
+    case 2:
+      return 'ERROR';
+  }
+}

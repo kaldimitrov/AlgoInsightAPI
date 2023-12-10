@@ -4,7 +4,7 @@ import * as tar from 'tar-stream';
 import { Container } from './models/container.model';
 import { getFileContent } from 'src/helpers/FileHelper';
 import { ExecStep } from './models/execStep.model';
-import { getDockerSocketPath } from 'src/helpers/OsHelper';
+import { getDockerSocketPath, getLogLevel } from 'src/helpers/OsHelper';
 import { REDIS } from 'src/redis/redis.constants';
 import { RedisClient } from 'src/redis/redis.providers';
 import { MB_SIZE, TIMEOUT_JOB } from './constants';
@@ -17,6 +17,7 @@ import { removeControlCharacters } from 'src/helpers/StringHelper';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { createLock } from 'ioredis-lock';
+import * as moment from 'moment-timezone';
 
 /*
 TODO:
@@ -24,6 +25,7 @@ TODO:
  - add filters for history
  - create endpoints for getting history data
  - create endpoint for getting status of current executions (state)
+ - add tags to history so users can search by it
 */
 
 @Injectable()
@@ -192,13 +194,15 @@ export class DockerService implements OnApplicationBootstrap {
 
     const execStart = await exec.start({});
     const stepOutput: string = await new Promise((resolve, reject) => {
-      let outputBuffer = Buffer.alloc(0);
+      let output = '';
       execStart.on('data', (data) => {
         const logLevel = data.readUInt8(0);
-        outputBuffer = Buffer.concat([outputBuffer, data.slice(8)]);
+        const currentTime = moment().tz('GMT').format('HH:mm:ss.S');
+
+        output = output.concat(`[${getLogLevel(logLevel)} ${currentTime}]: ${data.slice(8).toString('utf-8')}`);
       });
       execStart.on('end', () => {
-        resolve(outputBuffer.toString('utf-8'));
+        resolve(output);
       });
       execStart.on('error', (err) => reject(err));
     });
