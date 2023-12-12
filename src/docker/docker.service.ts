@@ -26,6 +26,8 @@ TODO:
  - create endpoints for getting history data
  - create endpoint for getting status of current executions (state)
  - add tags to history so users can search by it
+ - add auth using google and other providers
+ - cleanup code and add constants
 */
 
 @Injectable()
@@ -79,7 +81,6 @@ export class DockerService implements OnApplicationBootstrap {
     }
 
     const history = await this.historyService.createHistory({ user_id: userId, language });
-    history.status = ExecutionStatus.SUCCESS;
 
     let container: Docker.Container;
     try {
@@ -174,6 +175,7 @@ export class DockerService implements OnApplicationBootstrap {
       }
       await lock.release();
 
+      history.status = ExecutionStatus.SUCCESS;
       return this.historyService.updateHistory({
         ...history,
         max_cpu: usageData.maxCPU,
