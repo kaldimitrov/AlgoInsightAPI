@@ -7,13 +7,13 @@ import { ExecStep } from './models/execStep.model';
 import { getDockerSocketPath, getLogLevel } from 'src/helpers/OsHelper';
 import { REDIS } from 'src/redis/redis.constants';
 import { RedisClient } from 'src/redis/redis.providers';
-import { MB_SIZE, TIMEOUT_JOB } from './constants';
+import { MB_SIZE, REDIS_DELAY, REDIS_RETRIES, TIMEOUT_JOB } from './constants';
 import { TRANSLATIONS } from 'src/config/translations';
 import { UserService } from 'src/user/user.service';
 import { HistoryService } from 'src/history/history.service';
 import { Languages } from './enums/languages';
 import { ExecutionStatus } from 'src/history/enums/executionStatus';
-import { removeControlCharacters } from 'src/helpers/StringHelper';
+import { addLogInformation, removeControlCharacters } from 'src/helpers/StringHelper';
 import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { createLock } from 'ioredis-lock';
@@ -21,13 +21,12 @@ import * as moment from 'moment-timezone';
 
 /*
 TODO:
- - improve logs to include log level and time
  - add filters for history
  - create endpoints for getting history data
  - create endpoint for getting status of current executions (state)
  - add tags to history so users can search by it
  - add auth using google and other providers
- - cleanup code and add constants
+ - possibly compress logged data
 */
 
 @Injectable()
@@ -66,8 +65,8 @@ export class DockerService implements OnApplicationBootstrap {
   async execute(code: string, containerSettings: Container, userId: number, language: Languages) {
     const user = await this.userService.findOne(userId);
     const lock = createLock(this.redisClient, {
-      retries: 10,
-      delay: 200,
+      retries: REDIS_RETRIES,
+      delay: REDIS_DELAY,
     });
 
     let userContainers = JSON.parse(await this.redisClient.hget('activeContainers', String(userId))) || [];
@@ -198,10 +197,12 @@ export class DockerService implements OnApplicationBootstrap {
     const stepOutput: string = await new Promise((resolve, reject) => {
       let output = '';
       execStart.on('data', (data) => {
-        const logLevel = data.readUInt8(0);
+        const logLevel = getLogLevel(data.readUInt8(0));
         const currentTime = moment().tz('GMT').format('HH:mm:ss.S');
 
-        output = output.concat(`[${getLogLevel(logLevel)} ${currentTime}]: ${data.slice(8).toString('utf-8')}`);
+        output = output.concat(
+          addLogInformation(`[${logLevel} ${currentTime}]: ${data.slice(8).toString('utf-8')}`, logLevel, currentTime),
+        );
       });
       execStart.on('end', () => {
         resolve(output);

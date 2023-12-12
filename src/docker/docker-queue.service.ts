@@ -3,7 +3,7 @@ import * as Docker from 'dockerode';
 import { getDockerSocketPath } from 'src/helpers/OsHelper';
 import { REDIS } from 'src/redis/redis.constants';
 import { RedisClient } from 'src/redis/redis.providers';
-import { TIMEOUT_JOB } from './constants';
+import { REDIS_DELAY, REDIS_RETRIES, TIMEOUT_JOB } from './constants';
 import { ExecutionStatus } from 'src/history/enums/executionStatus';
 import { Job, Queue } from 'bull';
 import { InjectQueue, Process, Processor } from '@nestjs/bull';
@@ -31,8 +31,8 @@ export class DockerQueueService implements OnApplicationBootstrap {
     const { userId, containerId } = job.data;
 
     const lock = createLock(this.redisClient, {
-      retries: 10,
-      delay: 200,
+      retries: REDIS_RETRIES,
+      delay: REDIS_DELAY,
     });
     await lock.acquire(`lock:activeContainer-${userId}`);
     try {
