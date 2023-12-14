@@ -17,7 +17,7 @@ async function bootstrap() {
   SwaggerModule.setup('documentation', app, document);
 
   app.enableCors({ origin: '*' });
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ transform: true, transformOptions: { enableImplicitConversion: true } }));
   app.setGlobalPrefix('api');
 
   await app.listen(configuration().port);
