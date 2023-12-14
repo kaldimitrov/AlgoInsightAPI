@@ -21,8 +21,6 @@ import * as moment from 'moment-timezone';
 
 /*
 TODO:
- - add filters for history
- - create endpoints for getting history data
  - create endpoint for getting status of current executions (state)
  - add tags to history so users can search by it
  - add auth using google and other providers

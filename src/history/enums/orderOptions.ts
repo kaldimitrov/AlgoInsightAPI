@@ -1,6 +1,6 @@
 export enum OrderTypes {
-  DESC = 'Desc',
-  ASC = 'Asc',
+  DESC = 'DESC',
+  ASC = 'ASC',
 }
 
 export enum OrderOptions {

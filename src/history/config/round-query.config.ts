@@ -7,13 +7,31 @@ export const historyQueryConfig: QueryConfig = {
   status: {
     query: 'r.status = :status',
   },
-  date_start_value: {
-    query: 'r.created_at >= :date_start_value',
+  min_cpu_usage: {
+    query: 'r.max_cpu >= :min_cpu_usage',
   },
-  date_end_value: {
-    query: 'r.created_at <= :date_end_value',
+  max_cpu_usage: {
+    query: 'r.max_cpu <= :max_cpu_usage',
   },
-  card_suit: {
-    query: 'r.card_suit = :card_suit',
+  min_memory_usage: {
+    query: 'r.max_memory >= :min_memory_usage',
+  },
+  max_memory_usage: {
+    query: 'r.max_memory <= :max_memory_usage',
+  },
+  min_execution_time: {
+    query: 'r.execution_time >= :min_execution_time',
+  },
+  max_execution_time: {
+    query: 'r.execution_time <= :max_execution_time',
+  },
+  date_start: {
+    query: 'r.created_at >= :date_start',
+  },
+  date_end: {
+    query: 'r.created_at <= :date_end ',
+  },
+  user_id: {
+    query: 'r.user_id = :user_id',
   },
 };
