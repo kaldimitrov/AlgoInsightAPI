@@ -29,6 +29,10 @@ export class HistoryService implements OnApplicationBootstrap {
     return this.historyRepository.save(history);
   }
 
+  deleteHistory(user_id: number, id: string) {
+    return this.historyRepository.delete({ id, user_id });
+  }
+
   getHistoryDetails(userId: number, id: string) {
     return this.historyRepository.findOneBy({ user_id: userId, id });
   }

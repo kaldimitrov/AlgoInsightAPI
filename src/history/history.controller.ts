@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { HistoryService } from './history.service';
 import { GetHistoryDto } from './dto/history.dto';
@@ -21,5 +21,11 @@ export class HistoryController {
   @UseGuards(JwtAuthGuard)
   getHistoryDetails(@Token() token: TokenPayload, @Param('id') id: string) {
     return this.historyService.getHistoryDetails(token.userId, id);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  DeleteHistory(@Token() token: TokenPayload, @Param('id') id: string) {
+    return this.historyService.deleteHistory(token.userId, id);
   }
 }
