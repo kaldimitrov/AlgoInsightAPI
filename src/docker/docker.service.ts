@@ -5,8 +5,8 @@ import { Container } from './models/container.model';
 import { getFileContent } from 'src/helpers/FileHelper';
 import { ExecStep } from './models/execStep.model';
 import { getDockerSocketPath, getLogLevel } from 'src/helpers/OsHelper';
-import { REDIS } from 'src/redis/redis.constants';
-import { RedisClient } from 'src/redis/redis.providers';
+import { REDIS } from 'src/shared/redis/redis.constants';
+import { RedisClient } from 'src/shared/redis/redis.providers';
 import { MB_SIZE, REDIS_DELAY, REDIS_RETRIES, TIMEOUT_JOB } from './constants';
 import { TRANSLATIONS } from 'src/config/translations';
 import { UserService } from 'src/user/user.service';
@@ -223,6 +223,10 @@ export class DockerService implements OnApplicationBootstrap {
     const systemDelta = stats.cpu_stats.system_cpu_usage - previousSystem;
 
     const cpuPercent = (cpuDelta / systemDelta) * stats.cpu_stats.online_cpus * 100;
+
+    if (isNaN(cpuPercent) || isNaN(memoryUsage)) {
+      return null;
+    }
 
     return { memory: Number(memoryUsage.toFixed(2)), cpu: Number(cpuPercent.toFixed(2)) };
   }

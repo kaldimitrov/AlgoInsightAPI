@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user/user.module';
 import { DockerModule } from './docker/docker.module';
 import { HistoryModule } from './history/history.module';
+import { SharedModule } from './shared/shared.module';
 
 /* eslint-disable */
 const SnakeNamingStrategy = require('typeorm-naming-strategies').SnakeNamingStrategy;
@@ -39,6 +40,7 @@ const SnakeNamingStrategy = require('typeorm-naming-strategies').SnakeNamingStra
     UserModule,
     DockerModule,
     HistoryModule,
+    SharedModule,
   ],
   controllers: [],
   providers: [Logger],

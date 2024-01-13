@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import * as Docker from 'dockerode';
 import { getDockerSocketPath } from 'src/helpers/OsHelper';
-import { REDIS } from 'src/redis/redis.constants';
-import { RedisClient } from 'src/redis/redis.providers';
+import { REDIS } from 'src/shared/redis/redis.constants';
+import { RedisClient } from 'src/shared/redis/redis.providers';
 import { REDIS_DELAY, REDIS_RETRIES, TIMEOUT_JOB } from './constants';
 import { ExecutionStatus } from 'src/history/enums/executionStatus';
 import { Job, Queue } from 'bull';
