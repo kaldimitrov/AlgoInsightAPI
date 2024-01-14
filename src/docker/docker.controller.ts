@@ -24,6 +24,12 @@ export class DockerController {
     );
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('state')
+  getExecutionState(@Token() token: TokenPayload) {
+    return this.dockerService.getExecutionStatus(token.userId);
+  }
+
   @Get('languages')
   getLanguages() {
     return { languages: Object.values(Languages) };

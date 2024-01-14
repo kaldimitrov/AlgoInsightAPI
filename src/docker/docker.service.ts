@@ -18,10 +18,10 @@ import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { createLock } from 'ioredis-lock';
 import * as moment from 'moment-timezone';
+import { RedisPropagatorService } from 'src/shared/redis-propagator/redis-propagator.service';
 
 /*
 TODO:
- - create endpoint for getting status of current executions (state)
  - add tags to history so users can search by it
  - add auth using google and other providers
  - possibly compress logged data
@@ -37,6 +37,7 @@ export class DockerService implements OnApplicationBootstrap {
     private readonly userService: UserService,
     private readonly historyService: HistoryService,
     @InjectQueue('docker-queue') private readonly dockerQueue: Queue,
+    private readonly redisPropagatorService: RedisPropagatorService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -58,6 +59,10 @@ export class DockerService implements OnApplicationBootstrap {
     }
 
     await this.redisClient.del('activeContainers');
+  }
+
+  getExecutionStatus(userId: number) {
+    return this.redisClient.hget('activeContainers', String(userId));
   }
 
   async execute(code: string, containerSettings: Container, userId: number, language: Languages) {
@@ -126,13 +131,19 @@ export class DockerService implements OnApplicationBootstrap {
         const processedData = this.processContainerStats(JSON.parse(data.toString('utf-8').replace(/\n/g, '')));
 
         if (processedData) {
+          this.redisPropagatorService.emitToUser({
+            event: 'newStats',
+            userId: userId,
+            data: { time, cpu: processedData.cpu, memory: processedData.memory },
+          });
+
           history.stats.push({ time, cpu: processedData.cpu, memory: processedData.memory });
         }
       });
 
       for (const execStep of containerSettings.execution) {
         const data = await this.execStep(container, execStep);
-        if (execStep.log && data) {
+        if (data) {
           history.logs = history.logs.concat(removeControlCharacters(data));
         }
       }
@@ -172,7 +183,16 @@ export class DockerService implements OnApplicationBootstrap {
       }
       await lock.release();
 
-      history.status = ExecutionStatus.SUCCESS;
+      if (history.status == ExecutionStatus.PENDING) {
+        history.status = ExecutionStatus.SUCCESS;
+      }
+
+      this.redisPropagatorService.emitToUser({
+        event: 'executionStatus',
+        userId: user.id,
+        data: { status: history.status, id: history.id },
+      });
+
       return this.historyService.updateHistory({
         ...history,
         max_cpu: usageData.maxCPU,
@@ -185,6 +205,9 @@ export class DockerService implements OnApplicationBootstrap {
   }
 
   private async execStep(container: Docker.Container, execStep: ExecStep) {
+    const userId = parseInt((await container.inspect()).Name.split('-')[1]);
+    const executionCount = parseInt((await container.inspect()).Name.split('-')[2]);
+
     const exec = await container.exec({
       Cmd: [execStep.cmd, ...execStep.params],
       AttachStdout: true,
@@ -197,10 +220,19 @@ export class DockerService implements OnApplicationBootstrap {
       execStart.on('data', (data) => {
         const logLevel = getLogLevel(data.readUInt8(0));
         const currentTime = moment().tz('GMT').format('HH:mm:ss.S');
-
-        output = output.concat(
+        const newLog = removeControlCharacters(
           addLogInformation(`[${logLevel} ${currentTime}]: ${data.slice(8).toString('utf-8')}`, logLevel, currentTime),
         );
+
+        if (execStep.log) {
+          output = output.concat(newLog);
+
+          this.redisPropagatorService.emitToUser({
+            event: 'newLog',
+            userId: userId,
+            data: { log: newLog, executionCount },
+          });
+        }
       });
       execStart.on('end', () => {
         resolve(output);
