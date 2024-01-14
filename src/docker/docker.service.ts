@@ -42,9 +42,6 @@ export class DockerService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     const activeContainers = await this.redisClient.hgetall('activeContainers');
-    if (!activeContainers || !Object.keys(activeContainers).length) {
-      return;
-    }
 
     for (const [key, value] of Object.entries(activeContainers)) {
       const containers = JSON.parse(value);
@@ -142,11 +139,9 @@ export class DockerService implements OnApplicationBootstrap {
       });
 
       for (const execStep of containerSettings.execution) {
-        const data = await this.execStep(container, execStep);
-        if (data) {
-          history.logs = history.logs.concat(removeControlCharacters(data));
-        }
+        history.logs = history.logs.concat(removeControlCharacters(await this.execStep(container, execStep)));
       }
+      
     } catch (error) {
       history.status = ExecutionStatus.ERRORED;
       this.logger.error('Error running docker', error);
