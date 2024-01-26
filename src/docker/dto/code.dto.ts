@@ -1,9 +1,20 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Languages } from '../enums/languages';
+import { Type } from 'class-transformer';
+
+export class FileDto {
+  @IsString()
+  path: string;
+
+  @IsString()
+  content: string;
+}
 
 export class CodeSubmitDto {
-  @IsString()
-  code: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FileDto)
+  files: FileDto[];
 
   @IsEnum(Languages)
   language: Languages;

@@ -17,7 +17,7 @@ export class DockerController {
   @Post('submit')
   submit(@Token() token: TokenPayload, @Body() body: CodeSubmitDto) {
     return this.dockerService.execute(
-      body.code,
+      body.files,
       { ...containers[body.language], version: body.version ?? 'latest' },
       token.userId,
       body.language,

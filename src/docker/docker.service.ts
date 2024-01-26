@@ -19,6 +19,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { createLock } from 'ioredis-lock';
 import * as moment from 'moment-timezone';
 import { RedisPropagatorService } from 'src/shared/redis-propagator/redis-propagator.service';
+import { FileDto } from './dto/code.dto';
 
 /*
 TODO:
@@ -62,7 +63,7 @@ export class DockerService implements OnApplicationBootstrap {
     return this.redisClient.hget('activeContainers', String(userId));
   }
 
-  async execute(code: string, containerSettings: Container, userId: number, language: Languages) {
+  async execute(files: FileDto[], containerSettings: Container, userId: number, language: Languages) {
     const user = await this.userService.findOne(userId);
     const lock = createLock(this.redisClient, {
       retries: REDIS_RETRIES,
@@ -75,9 +76,9 @@ export class DockerService implements OnApplicationBootstrap {
       throw new BadRequestException(TRANSLATIONS.errors.execution.active_containers_limit);
     }
 
-    if (code.length > user.max_code_length) {
-      throw new BadRequestException(TRANSLATIONS.errors.execution.max_code_length);
-    }
+    // if (code.length > user.max_code_length) {
+    //   throw new BadRequestException(TRANSLATIONS.errors.execution.max_code_length);
+    // }
 
     const history = await this.historyService.createHistory({ user_id: userId, language });
 
@@ -119,7 +120,7 @@ export class DockerService implements OnApplicationBootstrap {
           name: 'bash.sh',
           content: getFileContent(`${__dirname}/templates/bash.sh`, '{{file_name}}', `${history.id}.txt`),
         },
-        { name: containerSettings.fileName, content: code },
+        ...files.map((files) => ({ name: files.path, content: files.content })),
       ]);
 
       const statsStream = await container.stats({ stream: true });
@@ -141,7 +142,6 @@ export class DockerService implements OnApplicationBootstrap {
       for (const execStep of containerSettings.execution) {
         history.logs = history.logs.concat(removeControlCharacters(await this.execStep(container, execStep)));
       }
-      
     } catch (error) {
       history.status = ExecutionStatus.ERRORED;
       this.logger.error('Error running docker', error);
