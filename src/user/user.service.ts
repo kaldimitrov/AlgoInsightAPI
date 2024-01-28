@@ -22,7 +22,7 @@ export class UserService {
 
   async register(dto: CreateUserDto): Promise<{ token: string }> {
     if (await this.findByEmail(dto.email)) {
-      throw new ConflictException({ error: TRANSLATIONS.errors.user.email_taken });
+      throw new ConflictException(TRANSLATIONS.errors.user.email_taken);
     }
 
     const user: User = await this.userRepository.save({
@@ -33,7 +33,7 @@ export class UserService {
     });
 
     if (!user) {
-      throw new BadRequestException({ error: TRANSLATIONS.errors.user.invalid_user });
+      throw new BadRequestException(TRANSLATIONS.errors.user.invalid_user);
     }
 
     return { token: await this.authService.generateToken(user) };
@@ -43,11 +43,11 @@ export class UserService {
     const user: User = await this.userRepository.findOne({ where: { email: dto.email } });
 
     if (!user) {
-      throw new UnauthorizedException({ error: TRANSLATIONS.errors.user.invalid_credentials });
+      throw new UnauthorizedException(TRANSLATIONS.errors.user.invalid_credentials);
     }
 
     if (!(await this.authService.comparePasswords(dto.password, user.hashedPassword))) {
-      throw new UnauthorizedException({ error: TRANSLATIONS.errors.user.invalid_credentials });
+      throw new UnauthorizedException(TRANSLATIONS.errors.user.invalid_credentials);
     }
 
     return { token: await this.authService.generateToken(user) };
@@ -57,7 +57,7 @@ export class UserService {
     const existingUser = await this.findOne(userId);
 
     if (!existingUser) {
-      throw new BadRequestException({ error: TRANSLATIONS.errors.user.invalid_user });
+      throw new BadRequestException(TRANSLATIONS.errors.user.invalid_user);
     }
 
     Object.assign(existingUser, updateUserDto);
@@ -76,7 +76,7 @@ export class UserService {
     const user: User = await this.userRepository.findOne({ where: { id } });
 
     if (!user) {
-      throw new NotFoundException({ error: TRANSLATIONS.errors.user.invalid_user });
+      throw new NotFoundException(TRANSLATIONS.errors.user.invalid_user);
     }
 
     delete user.hashedPassword;
