@@ -18,6 +18,7 @@ async function bootstrap() {
   app.useWebSocketAdapter(
     new SocketStateAdapter(app, app.get(SocketStateService), app.get(RedisPropagatorService), app.get(AuthService)),
   );
+  app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder().build();
   const document = SwaggerModule.createDocument(app, config);
@@ -25,7 +26,6 @@ async function bootstrap() {
 
   app.enableCors({ origin: '*' });
   app.useGlobalPipes(new ValidationPipe({ transform: true, transformOptions: { enableImplicitConversion: true } }));
-  app.setGlobalPrefix('api');
 
   await app.listen(configuration().port);
 }

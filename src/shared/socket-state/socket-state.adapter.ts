@@ -30,15 +30,18 @@ export class SocketStateAdapter extends IoAdapter {
     this.redisPropagatorService.injectSocketServer(server);
 
     server.use(async (socket: AuthenticatedSocket, next) => {
-      if (!socket.handshake?.headers?.authorization) {
+      if (!socket.handshake?.auth.headers?.authorization && !socket.handshake?.headers?.authorization) {
         socket.auth = null;
 
         return socket.disconnect();
       }
 
       try {
-        const decoded = this.authService.decodeToken(socket.handshake.headers.authorization.split(' ')[1]);
+        const token =
+          socket.handshake?.auth?.headers?.authorization?.split(' ')[1] ||
+          socket.handshake?.headers?.authorization?.split(' ')[1];
 
+        const decoded = this.authService.decodeToken(token);
         if (!decoded) {
           return socket.disconnect();
         }
@@ -50,7 +53,6 @@ export class SocketStateAdapter extends IoAdapter {
         }
 
         socket.data.user = decoded;
-
         socket.auth = {
           userId: decoded.userId,
           firstName: decoded.firstName,

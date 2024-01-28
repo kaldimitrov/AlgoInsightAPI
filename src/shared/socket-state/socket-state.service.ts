@@ -4,7 +4,7 @@ import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 
 @Injectable()
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class SocketStateService {
   private socketState = new Map<number, AuthenticatedSocket[]>();
   @WebSocketServer() private server: Server;
