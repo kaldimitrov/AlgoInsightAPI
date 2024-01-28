@@ -76,9 +76,9 @@ export class DockerService implements OnApplicationBootstrap {
       throw new BadRequestException(TRANSLATIONS.errors.execution.active_containers_limit);
     }
 
-    // if (code.length > user.max_code_length) {
-    //   throw new BadRequestException(TRANSLATIONS.errors.execution.max_code_length);
-    // }
+    if (files.length > user.max_files) {
+      throw new BadRequestException(TRANSLATIONS.errors.execution.max_files);
+    }
 
     const history = await this.historyService.createHistory({ user_id: userId, language });
 

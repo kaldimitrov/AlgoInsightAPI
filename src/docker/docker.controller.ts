@@ -6,7 +6,6 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Token } from 'src/auth/decorators/user.decorator';
 import { containers } from 'src/config/containers';
 import { TokenPayload } from 'src/auth/models/token.model';
-import { Languages } from './enums/languages';
 
 @ApiTags('Code Endpoints')
 @Controller('code')
@@ -32,6 +31,13 @@ export class DockerController {
 
   @Get('languages')
   getLanguages() {
-    return { languages: Object.values(Languages) };
+    return {
+      languages: Object.keys(containers).map((key) => {
+        return {
+          name: containers[key].name,
+          fileName: containers[key].fileName,
+        };
+      }),
+    };
   }
 }

@@ -35,8 +35,8 @@ export class User {
   @Column({ default: 2 })
   execution_concurrency: number = 2;
 
-  @Column({ default: 10000 })
-  max_code_length: number = 10000;
+  @Column({ default: 50 })
+  max_files: number = 50;
 
   @Column({ default: 60000 })
   max_runtime_duration: number = 60000;

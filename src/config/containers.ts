@@ -1,5 +1,6 @@
 export const containers = {
   node: {
+    name: 'NodeJS',
     image: 'node',
     fileName: 'index.js',
     execution: [
@@ -16,6 +17,7 @@ export const containers = {
     ],
   },
   python: {
+    name: 'Python',
     image: 'python',
     fileName: 'main.py',
     execution: [
@@ -32,6 +34,7 @@ export const containers = {
     ],
   },
   c: {
+    name: 'C',
     image: 'gcc',
     fileName: 'main.c',
     execution: [
@@ -58,6 +61,7 @@ export const containers = {
     ],
   },
   cpp: {
+    name: 'C++',
     image: 'gcc',
     fileName: 'main.cpp',
     execution: [
@@ -84,6 +88,7 @@ export const containers = {
     ],
   },
   ruby: {
+    name: 'Ruby',
     image: 'ruby',
     fileName: 'main.rb',
     execution: [
@@ -100,6 +105,7 @@ export const containers = {
     ],
   },
   java: {
+    name: 'Java',
     image: 'openjdk',
     fileName: 'Main.java',
     execution: [
@@ -121,6 +127,7 @@ export const containers = {
     ],
   },
   rust: {
+    name: 'Rust',
     image: 'rust',
     fileName: 'main.rs',
     execution: [
@@ -142,6 +149,7 @@ export const containers = {
     ],
   },
   haskell: {
+    name: 'Haskell',
     image: 'haskell',
     fileName: 'main.hs',
     execution: [
@@ -168,6 +176,7 @@ export const containers = {
     ],
   },
   elixir: {
+    name: 'Elixir',
     image: 'elixir',
     fileName: 'main.exs',
     execution: [
@@ -184,6 +193,7 @@ export const containers = {
     ],
   },
   golang: {
+    name: 'Go',
     image: 'golang',
     fileName: 'main.go',
     execution: [
@@ -200,6 +210,7 @@ export const containers = {
     ],
   },
   swift: {
+    name: 'Swift',
     image: 'swift',
     fileName: 'main.swift',
     execution: [
@@ -226,6 +237,7 @@ export const containers = {
     ],
   },
   dart: {
+    name: 'Dart',
     image: 'dart',
     fileName: 'main.dart',
     execution: [
@@ -242,6 +254,7 @@ export const containers = {
     ],
   },
   perl: {
+    name: 'Perl',
     image: 'perl',
     fileName: 'main.pl',
     execution: [
