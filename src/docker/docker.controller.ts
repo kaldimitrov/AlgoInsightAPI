@@ -34,6 +34,7 @@ export class DockerController {
     return {
       languages: Object.keys(containers).map((key) => {
         return {
+          key,
           name: containers[key].name,
           fileName: containers[key].fileName,
         };

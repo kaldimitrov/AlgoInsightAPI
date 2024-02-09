@@ -25,7 +25,7 @@ export class HistoryController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
-  DeleteHistory(@Token() token: TokenPayload, @Param('id') id: string) {
+  deleteHistory(@Token() token: TokenPayload, @Param('id') id: string) {
     return this.historyService.deleteHistory(token.userId, id);
   }
 }
