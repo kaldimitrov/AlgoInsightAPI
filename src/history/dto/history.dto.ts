@@ -3,8 +3,13 @@ import { Languages } from 'src/docker/enums/languages';
 import { MAX_PAGE_SIZE } from '../constants';
 import { ExecutionStatus } from '../enums/executionStatus';
 import { OrderOptions, OrderTypes } from '../enums/orderOptions';
+import { FileDto } from 'src/docker/dto/code.dto';
 
 export class GetHistoryDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
   @IsEnum(Languages)
   @IsOptional()
   language?: Languages;
@@ -62,6 +67,8 @@ export class GetHistoryDto {
 }
 
 export interface CreateHistoryDto {
+  name: string;
   language: Languages;
   user_id: number;
+  files: FileDto[];
 }

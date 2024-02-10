@@ -38,7 +38,21 @@ export class HistoryService implements OnApplicationBootstrap {
   }
 
   async filterHistory(userId: number, dto: GetHistoryDto) {
-    const historyQuery = this.historyRepository.createQueryBuilder('r').orderBy(`r.${dto.orderOptions}`, dto.orderBy);
+    const columns = this.historyRepository.metadata.columns.map((column) => column.propertyName);
+    console.log(columns);
+    const historyQuery = this.historyRepository
+      .createQueryBuilder('r')
+      .orderBy(`r.${dto.orderOptions}`, dto.orderBy)
+      .select([
+        'r.id',
+        'r.name',
+        'r.execution_time',
+        'r.status',
+        'r.language',
+        'r.max_memory',
+        'r.max_cpu',
+        'r.created_at',
+      ]);
 
     QueryHelper.applyFilters(historyQuery, historyQueryConfig, { userId, ...dto });
     const [result, total] = await Promise.all([

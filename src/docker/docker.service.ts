@@ -23,7 +23,6 @@ import { FileDto } from './dto/code.dto';
 
 /*
 TODO:
- - add tags to history so users can search by it
  - add auth using google and other providers
  - possibly compress logged data
 */
@@ -63,7 +62,7 @@ export class DockerService implements OnApplicationBootstrap {
     return this.redisClient.hget('activeContainers', String(userId));
   }
 
-  async execute(files: FileDto[], containerSettings: Container, userId: number, language: Languages) {
+  async execute(name: string, files: FileDto[], containerSettings: Container, userId: number, language: Languages) {
     const user = await this.userService.findOne(userId);
     const lock = createLock(this.redisClient, {
       retries: REDIS_RETRIES,
@@ -80,7 +79,7 @@ export class DockerService implements OnApplicationBootstrap {
       throw new BadRequestException(TRANSLATIONS.errors.execution.max_files);
     }
 
-    const history = await this.historyService.createHistory({ user_id: userId, language });
+    const history = await this.historyService.createHistory({ user_id: userId, language, files, name });
 
     let container: Docker.Container;
     try {

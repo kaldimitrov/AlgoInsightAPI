@@ -11,6 +11,9 @@ export class FileDto {
 }
 
 export class CodeSubmitDto {
+  @IsString()
+  name: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => FileDto)
