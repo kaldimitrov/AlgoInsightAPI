@@ -11,6 +11,7 @@ import { User } from './user.entity';
 import { AuthService } from 'src/auth/auth.service';
 import { CreateUserDto, LoginUserDto, UpdateUserDto } from './dto/user.dto';
 import { TRANSLATIONS } from 'src/config/translations';
+import { validatePassword } from 'src/helpers/RegexHelper';
 
 @Injectable()
 export class UserService {
@@ -23,6 +24,10 @@ export class UserService {
   async register(dto: CreateUserDto): Promise<{ token: string }> {
     if (await this.findByEmail(dto.email)) {
       throw new ConflictException(TRANSLATIONS.errors.user.email_taken);
+    }
+
+    if (!validatePassword(dto.password)) {
+      throw new BadRequestException(TRANSLATIONS.errors.user.invalid_password);
     }
 
     const user: User = await this.userRepository.save({
@@ -58,6 +63,10 @@ export class UserService {
 
     if (!existingUser) {
       throw new BadRequestException(TRANSLATIONS.errors.user.invalid_user);
+    }
+
+    if (!validatePassword(updateUserDto.password)) {
+      throw new BadRequestException(TRANSLATIONS.errors.user.invalid_password);
     }
 
     Object.assign(existingUser, updateUserDto);
