@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { Languages } from 'src/docker/enums/languages';
 import { MAX_PAGE_SIZE } from '../constants';
 import { ExecutionStatus } from '../enums/executionStatus';
@@ -8,6 +8,7 @@ import { FileDto } from 'src/docker/dto/code.dto';
 export class GetHistoryDto {
   @IsString()
   @IsOptional()
+  @MaxLength(20)
   name?: string;
 
   @IsEnum(Languages)

@@ -38,8 +38,6 @@ export class HistoryService implements OnApplicationBootstrap {
   }
 
   async filterHistory(userId: number, dto: GetHistoryDto) {
-    const columns = this.historyRepository.metadata.columns.map((column) => column.propertyName);
-    console.log(columns);
     const historyQuery = this.historyRepository
       .createQueryBuilder('r')
       .orderBy(`r.${dto.orderOptions}`, dto.orderBy)
