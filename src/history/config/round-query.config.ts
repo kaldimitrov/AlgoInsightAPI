@@ -1,6 +1,9 @@
 import { QueryConfig } from 'src/helpers/dto/query-config.type';
 
 export const historyQueryConfig: QueryConfig = {
+  name: {
+    query: 'r.name = :name',
+  },
   language: {
     query: 'r.language = :language',
   },
