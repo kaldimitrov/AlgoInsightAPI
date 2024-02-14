@@ -254,7 +254,7 @@ export class DockerService implements OnApplicationBootstrap {
       return null;
     }
 
-    return { memory: Number(memoryUsage.toFixed(2)), cpu: Number(cpuPercent.toFixed(2)) };
+    return { memory: Math.max(Number(memoryUsage.toFixed(2)), 0), cpu: Math.max(Number(cpuPercent.toFixed(2)), 0) };
   }
 
   private async pullImage(image: string, version: string) {
