@@ -187,6 +187,10 @@ export class DockerService implements OnApplicationBootstrap {
         data: { status: history.status, id: history.id },
       });
 
+      if (history.logs.length > 2000000) {
+        history.logs = history.logs.slice(0, 2000000);
+      }
+      
       return this.historyService.updateHistory({
         ...history,
         max_cpu: usageData.maxCPU,
