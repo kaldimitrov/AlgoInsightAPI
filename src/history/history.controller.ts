@@ -17,6 +17,12 @@ export class HistoryController {
     return this.historyService.filterHistory(token.userId, query);
   }
 
+  @Get('/report')
+  @UseGuards(JwtAuthGuard)
+  getReport(@Token() token: TokenPayload) {
+    return this.historyService.generateUserReport(token.userId);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   getHistoryDetails(@Token() token: TokenPayload, @Param('id') id: string) {

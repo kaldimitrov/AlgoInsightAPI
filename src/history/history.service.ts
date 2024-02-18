@@ -66,4 +66,67 @@ export class HistoryService implements OnApplicationBootstrap {
       total,
     };
   }
+
+  async generateUserReport(userId: number): Promise<any> {
+    const executions = await this.historyRepository
+      .createQueryBuilder('history')
+      .select([
+        'history.created_at',
+        'history.status',
+        'history.execution_time',
+        'history.max_cpu',
+        'history.max_memory',
+      ])
+      .where('history.user_id = :userId', { userId })
+      .getMany();
+
+    let totalExecutionTime = 0;
+    let totalMaxCpu = 0;
+    let totalMaxMemory = 0;
+
+    const chartData = {
+      days: [],
+      executionTime: [],
+      maxCpu: [],
+      maxMemory: [],
+    };
+
+    executions.forEach((execution) => {
+      totalExecutionTime += execution.execution_time || 0;
+      totalMaxCpu += execution.max_cpu || 0;
+      totalMaxMemory += execution.max_memory || 0;
+
+      const day = execution.created_at.toISOString().split('T')[0];
+      if (!chartData.days.includes(day)) {
+        chartData.days.push(day);
+        chartData.executionTime.push(0);
+        chartData.maxCpu.push(0);
+        chartData.maxMemory.push(0);
+      }
+
+      const index = chartData.days.indexOf(day);
+      chartData.executionTime[index] += execution.execution_time || 0;
+      chartData.maxCpu[index] = Math.max(chartData.maxCpu[index], execution.max_cpu || 0);
+      chartData.maxMemory[index] = Math.max(chartData.maxMemory[index], execution.max_memory || 0);
+    });
+
+    const response = {
+      totalExecutionTime,
+      totalMaxCpu: totalMaxCpu.toFixed(2),
+      totalMaxMemory: totalMaxMemory.toFixed(2),
+      chartData,
+    };
+
+    const sortedDayIndices = chartData.days
+      .map((day, index) => ({ day, index }))
+      .sort((a, b) => a.day.localeCompare(b.day))
+      .map((item) => item.index);
+
+    response.chartData.days = sortedDayIndices.map((index) => chartData.days[index]);
+    response.chartData.executionTime = sortedDayIndices.map((index) => chartData.executionTime[index]);
+    response.chartData.maxCpu = sortedDayIndices.map((index) => chartData.maxCpu[index]);
+    response.chartData.maxMemory = sortedDayIndices.map((index) => chartData.maxMemory[index]);
+
+    return response;
+  }
 }
