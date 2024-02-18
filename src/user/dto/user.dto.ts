@@ -30,8 +30,4 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   lastName?: string;
-
-  @IsString()
-  @IsOptional()
-  password?: string;
 }

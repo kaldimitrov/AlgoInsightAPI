@@ -65,10 +65,6 @@ export class UserService {
       throw new BadRequestException(TRANSLATIONS.errors.user.invalid_user);
     }
 
-    if (!validatePassword(updateUserDto.password)) {
-      throw new BadRequestException(TRANSLATIONS.errors.user.invalid_password);
-    }
-
     Object.assign(existingUser, updateUserDto);
 
     const user = await this.userRepository.save(existingUser);
