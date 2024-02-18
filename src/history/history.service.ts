@@ -6,6 +6,7 @@ import { CreateHistoryDto, GetHistoryDto } from './dto/history.dto';
 import { historyQueryConfig } from './config/round-query.config';
 import QueryHelper from 'src/helpers/QueryHelper';
 import { ExecutionStatus } from './enums/executionStatus';
+import { OrderTypes } from './enums/orderOptions';
 
 @Injectable()
 export class HistoryService implements OnApplicationBootstrap {
@@ -40,7 +41,7 @@ export class HistoryService implements OnApplicationBootstrap {
   async filterHistory(userId: number, dto: GetHistoryDto) {
     const historyQuery = this.historyRepository
       .createQueryBuilder('r')
-      .orderBy(`r.${dto.orderOptions}`, dto.orderBy)
+      .orderBy(`r.${dto.orderOptions}`, dto.orderBy, dto.orderBy == OrderTypes.ASC ? 'NULLS FIRST' : 'NULLS LAST')
       .select([
         'r.id',
         'r.name',
