@@ -21,7 +21,7 @@ export class UserService {
     private readonly authService: AuthService,
   ) {}
 
-  async register(dto: CreateUserDto): Promise<{ token: string }> {
+  async register(dto: CreateUserDto): Promise<{ access_token: string; refresh_token: string }> {
     if (await this.findByEmail(dto.email)) {
       throw new ConflictException(TRANSLATIONS.errors.user.email_taken);
     }
@@ -41,10 +41,13 @@ export class UserService {
       throw new BadRequestException(TRANSLATIONS.errors.user.invalid_user);
     }
 
-    return { token: await this.authService.generateToken(user) };
+    return {
+      access_token: await this.authService.generateToken(user),
+      refresh_token: this.authService.signRefreshToken(user.id),
+    };
   }
 
-  async login(dto: LoginUserDto): Promise<{ token: string }> {
+  async login(dto: LoginUserDto): Promise<{ access_token: string; refresh_token: string }> {
     const user: User = await this.userRepository.findOne({ where: { email: dto.email } });
 
     if (!user) {
@@ -55,7 +58,10 @@ export class UserService {
       throw new UnauthorizedException(TRANSLATIONS.errors.user.invalid_credentials);
     }
 
-    return { token: await this.authService.generateToken(user) };
+    return {
+      access_token: await this.authService.generateToken(user),
+      refresh_token: this.authService.signRefreshToken(user.id),
+    };
   }
 
   async update(userId: number, updateUserDto: UpdateUserDto): Promise<User> {
@@ -90,5 +96,23 @@ export class UserService {
 
   findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
+  }
+
+  async refresh(refreshToken: string): Promise<{ access_token: string; refresh_token: string }> {
+    let decodedToken: { aud: string };
+    try {
+      decodedToken = await this.authService.verifyRefreshToken(refreshToken);
+    } catch (e) {
+      throw new UnauthorizedException(TRANSLATIONS.errors.user.invalid_user);
+    }
+    const user = await this.userRepository.findOneBy({ id: Number(decodedToken.aud) });
+    if (!user) {
+      throw new UnauthorizedException(TRANSLATIONS.errors.user.invalid_user);
+    }
+
+    return {
+      access_token: await this.authService.generateToken(user),
+      refresh_token: this.authService.signRefreshToken(user.id),
+    };
   }
 }

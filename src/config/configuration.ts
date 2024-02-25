@@ -4,6 +4,8 @@ export default () => ({
   jwt: {
     secret: process.env.JWT_SECRET || 'JWT_SECRET',
     expiration: process.env.JWT_EXPIRATION || '12h',
+    refresh_secret: process.env.JWT_SECRET || 'JWT_SECRET',
+    refresh_expiration: process.env.JWT_EXPIRATION || '1y',
   },
   database: {
     host: process.env.DATABASE_HOST || 'localhost',

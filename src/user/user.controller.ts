@@ -13,13 +13,18 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   @Post('register')
-  register(@Body() dto: CreateUserDto): Promise<{ token: string }> {
+  register(@Body() dto: CreateUserDto): Promise<{ access_token: string; refresh_token: string }> {
     return this.userService.register(dto);
   }
 
   @Post('login')
-  login(@Body() dto: LoginUserDto): Promise<{ token: string }> {
+  login(@Body() dto: LoginUserDto): Promise<{ access_token: string; refresh_token: string }> {
     return this.userService.login(dto);
+  }
+
+  @Post('refresh')
+  refresh(@Body('refresh_token') refreshToken: string): Promise<{ access_token: string; refresh_token: string }> {
+    return this.userService.refresh(refreshToken);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -3,12 +3,16 @@ import { JwtService } from '@nestjs/jwt';
 import RandomKey from '../helpers/RandomKey';
 import { User } from 'src/user/user.entity';
 import { DecodedToken, TokenPayload } from './models/token.model';
+import { ConfigService } from '@nestjs/config';
 /* eslint-disable */
 const bcrypt = require('bcrypt');
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
@@ -30,6 +34,25 @@ export class AuthService {
     };
 
     return this.jwtService.sign(payload);
+  }
+
+  signRefreshToken(userId: number): string {
+    return this.jwtService.sign(
+      { payload: RandomKey.generate(256) },
+      {
+        expiresIn: this.configService.get('jwt.refresh_expiration'),
+        secret: this.configService.get('jwt.refresh_secret'),
+        audience: userId.toString(),
+        subject: 'refresh',
+      },
+    );
+  }
+
+  verifyRefreshToken(token: string) {
+    return this.jwtService.verify(token, {
+      secret: this.configService.get('jwt.refresh_secret'),
+      subject: 'refresh',
+    });
   }
 
   decodeToken(token: string): DecodedToken {
